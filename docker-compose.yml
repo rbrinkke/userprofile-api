@@ -1,0 +1,128 @@
+version: '3.8'
+
+services:
+  # ============================================================================
+  # PostgreSQL Database
+  # ============================================================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: userprofile-db
+    environment:
+      POSTGRES_DB: activity
+      POSTGRES_USER: activity_user
+      POSTGRES_PASSWORD: activity_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sqlschema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./database/stored_procedures.sql:/docker-entrypoint-initdb.d/02-stored-procedures.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U activity_user -d activity"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - userprofile-network
+
+  # ============================================================================
+  # Redis Cache & Rate Limiting
+  # ============================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: userprofile-redis
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - userprofile-network
+
+  # ============================================================================
+  # User Profile API
+  # ============================================================================
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: userprofile-api
+    environment:
+      # Environment
+      ENVIRONMENT: development
+      DEBUG: "true"
+
+      # API Configuration
+      API_V1_PREFIX: /api/v1
+      PROJECT_NAME: User Profile API
+      API_VERSION: 1.0.0
+
+      # Database
+      DATABASE_URL: postgresql://activity_user:activity_password@postgres:5432/activity
+      DATABASE_POOL_MIN_SIZE: 10
+      DATABASE_POOL_MAX_SIZE: 20
+
+      # Redis
+      REDIS_URL: redis://redis:6379/0
+      REDIS_CACHE_DB: 0
+      REDIS_RATE_LIMIT_DB: 1
+
+      # JWT (CHANGE IN PRODUCTION)
+      JWT_SECRET_KEY: dev-secret-key-change-in-production
+      JWT_ALGORITHM: HS256
+
+      # Service API Keys (CHANGE IN PRODUCTION)
+      ACTIVITIES_API_KEY: dev-activities-key
+      PARTICIPATION_API_KEY: dev-participation-key
+      MODERATION_API_KEY: dev-moderation-key
+      PAYMENT_API_KEY: dev-payment-key
+
+      # External Services
+      IMAGE_API_URL: http://image-api:8001
+      IMAGE_API_CDN_DOMAIN: cdn.example.com
+      EMAIL_API_URL: http://email-api:8002
+      AUTH_API_URL: http://auth-api:8000
+
+      # Features
+      RATE_LIMIT_ENABLED: "true"
+      CACHE_ENABLED: "true"
+      ENABLE_METRICS: "true"
+
+      # Logging
+      LOG_LEVEL: INFO
+      LOG_FORMAT: json
+
+      # CORS
+      CORS_ORIGINS: '["http://localhost:3000","http://localhost:8080"]'
+
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - userprofile-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  userprofile-network:
+    driver: bridge
