@@ -158,7 +158,7 @@ class UpdateProfileResponse(BaseModel):
 
 class UpdateUsernameRequest(BaseModel):
     """Request to change username."""
-    new_username: str = Field(..., min_length=3, max_length=30, regex=r"^[a-zA-Z0-9_]{3,30}$")
+    new_username: str = Field(..., min_length=3, max_length=30, pattern=r"^[a-zA-Z0-9_]{3,30}$")
 
     class Config:
         schema_extra = {
