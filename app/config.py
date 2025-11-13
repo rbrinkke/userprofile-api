@@ -68,6 +68,20 @@ class Settings(BaseSettings):
     )
     CORS_ALLOW_CREDENTIALS: bool = Field(default=True, description="Allow credentials in CORS")
 
+    @validator("CORS_ORIGINS", pre=True)
+    def parse_cors_origins(cls, v):
+        """Parse CORS origins from JSON string or list."""
+        if isinstance(v, str):
+            import json
+            try:
+                parsed = json.loads(v)
+                if not isinstance(parsed, list):
+                    raise ValueError("CORS_ORIGINS must be a list")
+                return parsed
+            except json.JSONDecodeError:
+                raise ValueError(f"Invalid JSON in CORS_ORIGINS: {v}")
+        return v
+
     # Cache TTL Configuration (in seconds)
     CACHE_TTL_USER_PROFILE: int = Field(default=300, description="User profile cache TTL (5 minutes)")
     CACHE_TTL_USER_SETTINGS: int = Field(default=1800, description="User settings cache TTL (30 minutes)")

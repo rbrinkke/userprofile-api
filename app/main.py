@@ -110,8 +110,27 @@ app.add_middleware(CorrelationMiddleware)
 # Rate Limiting
 # ============================================================================
 
+
+def get_client_ip(request) -> str:
+    """
+    Get real client IP address, handling proxies and load balancers.
+
+    Checks X-Forwarded-For header first (for proxied requests),
+    falls back to direct client IP.
+    """
+    # Check X-Forwarded-For header (set by proxies/load balancers)
+    forwarded = request.headers.get("X-Forwarded-For")
+    if forwarded:
+        # X-Forwarded-For can contain multiple IPs: "client, proxy1, proxy2"
+        # First IP is the original client
+        return forwarded.split(",")[0].strip()
+
+    # Fallback to direct connection IP
+    return request.client.host if request.client else "127.0.0.1"
+
+
 limiter = Limiter(
-    key_func=get_remote_address,
+    key_func=get_client_ip,
     storage_uri=f"{settings.REDIS_URL}/{settings.REDIS_RATE_LIMIT_DB}",
     enabled=settings.RATE_LIMIT_ENABLED,
 )
