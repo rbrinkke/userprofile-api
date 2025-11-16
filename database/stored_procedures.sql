@@ -85,9 +85,9 @@ BEGIN
         u.last_seen_at,
         COALESCE(
             (
-                SELECT jsonb_agg(jsonb_build_object('tag', interest_tag, 'weight', weight))
-                FROM activity.user_interests
-                WHERE user_id = p_user_id
+                SELECT jsonb_agg(jsonb_build_object('tag', ui.interest_tag, 'weight', ui.weight))
+                FROM activity.user_interests ui
+                WHERE ui.user_id = p_user_id
             ),
             '[]'::jsonb
         ) AS interests,
@@ -1004,4 +1004,5 @@ $$ LANGUAGE plpgsql;
 -- ============================================================================
 
 -- Grant execute permissions to application user
-GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA activity TO activity_user;
+-- Note: activity_user role must be created first
+-- GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA activity TO activity_user;
