@@ -42,3 +42,27 @@ async def auth_testing_page(request: Request):
             "title": "Auth API Testing Interface",
         }
     )
+
+
+@router.get("/userprofile", response_class=HTMLResponse, summary="User Profile API Testing Page")
+async def userprofile_testing_page(request: Request):
+    """
+    Serves the User Profile API testing interface.
+
+    This page allows testing all 28 User Profile API endpoints:
+    - Profile Management (5 endpoints)
+    - Photo Management (3 endpoints)
+    - Interest Tags (4 endpoints)
+    - User Settings (2 endpoints)
+    - Subscription & Captain (4 endpoints)
+    - Trust & Verification (4 endpoints)
+    - Search & Activity (2 endpoints)
+    - Admin Moderation (4 endpoints)
+    """
+    return templates.TemplateResponse(
+        "userprofile_test.html",
+        {
+            "request": request,
+            "title": "User Profile API Testing Interface",
+        }
+    )
