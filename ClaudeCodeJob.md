@@ -1,9 +1,6 @@
-Context
-Een extra pagina maken in testing_ui we testen nu de auth-api en willen ook testen maken voor userprofile-api
-
 Doel 
-Een pagina die past bij de huidig pagina en de userprofile-api volledig test. Met dezelfde tools jinja2 en tailwind 
-
+Een test-userprofile-api.sh die de vollige api test en ook de resultaten bekijkt in de database
+dat we elke kunnen nakijken.
 
 Algemene info
 Auth: Bearer token vereist bij de meeste endpoints (HTTPBearer).
