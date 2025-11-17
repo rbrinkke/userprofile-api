@@ -1,0 +1,1375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .response-box {
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .flow-section {
+            scroll-margin-top: 120px;
+        }
+        .section-collapsed {
+            display: none;
+        }
+        .rotate-180 {
+            transform: rotate(180deg);
+        }
+        .transition-transform {
+            transition: transform 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-purple-600 to-indigo-700 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <h1 class="text-3xl font-bold">👤 User Profile API Testing Interface</h1>
+            <p class="text-purple-100 mt-2">Complete testing suite for all 28 User Profile API endpoints</p>
+            <div class="mt-3 flex gap-2 text-sm flex-wrap">
+                <span class="bg-yellow-500 text-yellow-900 px-3 py-1 rounded-full font-semibold">⚠️ TESTING ONLY</span>
+                <span class="bg-white/20 px-3 py-1 rounded-full">Environment: Development</span>
+                <span class="bg-white/20 px-3 py-1 rounded-full">Port: 8008</span>
+                <a href="/test/auth" class="bg-blue-500 hover:bg-blue-600 px-3 py-1 rounded-full transition">🔐 Auth API Tests</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Token Management Bar -->
+    <div class="bg-white shadow-md sticky top-28 z-40 border-b-2 border-purple-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex flex-col gap-3">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-bold text-gray-800 flex items-center gap-2">
+                        🎫 Bearer Token
+                        <span id="token_status" class="text-xs px-2 py-1 rounded-full bg-gray-200 text-gray-600">Not Set</span>
+                    </h3>
+                    <div class="flex gap-2">
+                        <button onclick="copyFromAuthTest()" class="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200 transition">
+                            Copy from Auth Test
+                        </button>
+                        <button onclick="clearToken()" class="text-sm bg-red-100 text-red-700 px-3 py-1 rounded hover:bg-red-200 transition">
+                            Clear Token
+                        </button>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <input type="text" id="bearer_token" placeholder="Paste access token here..."
+                        class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent font-mono"
+                        oninput="updateTokenStatus()">
+                    <button onclick="saveToken()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition text-sm font-semibold">
+                        Save Token
+                    </button>
+                </div>
+                <div id="token_info" class="text-xs text-gray-600 font-mono"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="bg-white shadow sticky top-52 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <nav class="flex gap-2 py-3 overflow-x-auto text-xs">
+                <a href="#profile" class="px-3 py-2 font-medium text-gray-700 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition whitespace-nowrap">👤 Profile</a>
+                <a href="#photos" class="px-3 py-2 font-medium text-gray-700 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition whitespace-nowrap">📷 Photos</a>
+                <a href="#interests" class="px-3 py-2 font-medium text-gray-700 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition whitespace-nowrap">🏷️ Interests</a>
+                <a href="#settings" class="px-3 py-2 font-medium text-gray-700 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition whitespace-nowrap">⚙️ Settings</a>
+                <a href="#subscription" class="px-3 py-2 font-medium text-gray-700 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition whitespace-nowrap">💎 Subscription</a>
+                <a href="#verification" class="px-3 py-2 font-medium text-gray-700 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition whitespace-nowrap">✓ Verification</a>
+                <a href="#search" class="px-3 py-2 font-medium text-gray-700 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition whitespace-nowrap">🔍 Search</a>
+                <a href="#admin" class="px-3 py-2 font-medium text-gray-700 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition whitespace-nowrap">🛡️ Admin</a>
+            </nav>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+
+        <!-- Profile Management Section -->
+        <section id="profile" class="flow-section bg-white rounded-lg shadow-lg overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4 flex items-center justify-between cursor-pointer" onclick="toggleSection('profile')">
+                <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                    👤 Profile Management
+                    <span class="text-sm font-normal opacity-90">(5 endpoints)</span>
+                </h2>
+                <svg class="w-6 h-6 text-white transition-transform" id="profile-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </div>
+            <div id="profile-content" class="p-6 space-y-6">
+
+                <!-- GET /api/v1/users/me -->
+                <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">GET /api/v1/users/me - Get My Profile</h3>
+                    <button onclick="getMyProfile()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+                        Get My Profile
+                    </button>
+                    <div id="get_my_profile_response" class="mt-3"></div>
+                </div>
+
+                <!-- PATCH /api/v1/users/me -->
+                <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">PATCH /api/v1/users/me - Update Profile</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                            <input type="text" id="update_first_name" placeholder="John" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                            <input type="text" id="update_last_name" placeholder="Doe" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Profile Description</label>
+                            <textarea id="update_description" placeholder="Tell us about yourself..." rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+                            <input type="date" id="update_dob" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                            <input type="text" id="update_gender" placeholder="male/female/other" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    <button onclick="updateProfile()" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+                        Update Profile
+                    </button>
+                    <div id="update_profile_response" class="mt-3"></div>
+                </div>
+
+                <!-- GET /api/v1/users/{user_id} -->
+                <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">GET /api/v1/users/{user_id} - Get Public Profile</h3>
+                    <div class="mb-3">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">User ID (UUID)</label>
+                        <input type="text" id="public_user_id" placeholder="00000000-0000-0000-0000-000000000000" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-mono text-sm">
+                    </div>
+                    <button onclick="getPublicProfile()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+                        Get Public Profile
+                    </button>
+                    <div id="get_public_profile_response" class="mt-3"></div>
+                </div>
+
+                <!-- PATCH /api/v1/users/me/username -->
+                <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">PATCH /api/v1/users/me/username - Update Username</h3>
+                    <div class="mb-3">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">New Username <span class="text-xs text-gray-500">(3-30 chars, alphanumeric + underscore)</span></label>
+                        <input type="text" id="new_username" placeholder="john_doe_2024" pattern="^[a-zA-Z0-9_]{3,30}$" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <button onclick="updateUsername()" class="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+                        Update Username (Rate Limited: 3/hour)
+                    </button>
+                    <div id="update_username_response" class="mt-3"></div>
+                </div>
+
+                <!-- DELETE /api/v1/users/me -->
+                <div class="border border-red-300 rounded-lg p-4 bg-red-50">
+                    <h3 class="text-lg font-semibold text-red-800 mb-3">DELETE /api/v1/users/me - Delete Account</h3>
+                    <div class="space-y-3 mb-3">
+                        <div>
+                            <label class="block text-sm font-medium text-red-700 mb-1">Password</label>
+                            <input type="password" id="delete_password" placeholder="Your password" class="w-full px-3 py-2 border border-red-300 rounded-lg focus:ring-2 focus:ring-red-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-red-700 mb-1">Confirmation (type exactly: DELETE MY ACCOUNT)</label>
+                            <input type="text" id="delete_confirmation" placeholder="DELETE MY ACCOUNT" class="w-full px-3 py-2 border border-red-300 rounded-lg focus:ring-2 focus:ring-red-500">
+                        </div>
+                    </div>
+                    <button onclick="deleteAccount()" class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+                        ⚠️ Delete Account (Rate Limited: 1/hour)
+                    </button>
+                    <div id="delete_account_response" class="mt-3"></div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Photo Management Section -->
+        <section id="photos" class="flow-section bg-white rounded-lg shadow-lg overflow-hidden">
+            <div class="bg-gradient-to-r from-pink-500 to-rose-600 px-6 py-4 flex items-center justify-between cursor-pointer" onclick="toggleSection('photos')">
+                <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                    📷 Photo Management
+                    <span class="text-sm font-normal opacity-90">(3 endpoints)</span>
+                </h2>
+                <svg class="w-6 h-6 text-white transition-transform" id="photos-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </div>
+            <div id="photos-content" class="p-6 space-y-6">
+
+                <!-- POST /api/v1/users/me/photos/main -->
+                <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">POST /api/v1/users/me/photos/main - Set Main Photo</h3>
+                    <div class="mb-3">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Photo URL (CDN)</label>
+                        <input type="url" id="main_photo_url" placeholder="https://cdn.example.com/photos/abc123.jpg" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 text-sm">
+                        <p class="text-xs text-gray-500 mt-1">Status will be "pending" until admin approval</p>
+                    </div>
+                    <button onclick="setMainPhoto()" class="w-full bg-pink-600 hover:bg-pink-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+                        Set Main Photo
+                    </button>
+                    <div id="set_main_photo_response" class="mt-3"></div>
+                </div>
+
+                <!-- POST /api/v1/users/me/photos -->
+                <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">POST /api/v1/users/me/photos - Add Extra Photo</h3>
+                    <div class="mb-3">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Photo URL <span class="text-xs text-gray-500">(Max 5 extra photos)</span></label>
+                        <input type="url" id="add_photo_url" placeholder="https://cdn.example.com/photos/xyz456.jpg" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 text-sm">
+                    </div>
+                    <button onclick="addPhoto()" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+                        Add Photo
+                    </button>
+                    <div id="add_photo_response" class="mt-3"></div>
+                </div>
+
+                <!-- DELETE /api/v1/users/me/photos -->
+                <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">DELETE /api/v1/users/me/photos - Remove Photo</h3>
+                    <div class="mb-3">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Photo URL to Remove</label>
+                        <input type="url" id="remove_photo_url" placeholder="https://cdn.example.com/photos/xyz456.jpg" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 text-sm">
+                    </div>
+                    <button onclick="removePhoto()" class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+                        Remove Photo
+                    </button>
+                    <div id="remove_photo_response" class="mt-3"></div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Interest Tags Section -->
+        <section id="interests" class="flow-section bg-white rounded-lg shadow-lg overflow-hidden">
+            <div class="bg-gradient-to-r from-green-500 to-emerald-600 px-6 py-4 flex items-center justify-between cursor-pointer" onclick="toggleSection('interests')">
+                <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                    🏷️ Interest Tags
+                    <span class="text-sm font-normal opacity-90">(4 endpoints)</span>
+                </h2>
+                <svg class="w-6 h-6 text-white transition-transform" id="interests-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </div>
+            <div id="interests-content" class="p-6 space-y-6">
+
+                <!-- GET /api/v1/users/me/interests -->
+                <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">GET /api/v1/users/me/interests - Get Interests</h3>
+                    <button onclick="getInterests()" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+                        Get My Interests
+                    </button>
+                    <div id="get_interests_response" class="mt-3"></div>
+                </div>
+
+                <!-- PUT /api/v1/users/me/interests -->
+                <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">PUT /api/v1/users/me/interests - Set Interests (Bulk Replace)</h3>
+                    <div class="mb-3">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Interests JSON <span class="text-xs text-gray-500">(Max 20 items)</span></label>
+                        <textarea id="set_interests_json" rows="6" placeholder='[
+  {"tag": "hiking", "weight": 1.0},
+  {"tag": "photography", "weight": 0.8},
+  {"tag": "cooking", "weight": 0.6}
+]' class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 font-mono text-sm"></textarea>
+                        <button onclick="fillSampleInterests()" class="mt-1 text-xs text-green-600 hover:underline">Fill with sample data</button>
+                    </div>
+                    <button onclick="setInterests()" class="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+                        Replace All Interests
+                    </button>
+                    <div id="set_interests_response" class="mt-3"></div>
+                </div>
+
+                <!-- POST /api/v1/users/me/interests -->
+                <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">POST /api/v1/users/me/interests - Add Interest</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Tag</label>
+                            <input type="text" id="add_interest_tag" placeholder="yoga" maxlength="100" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Weight (0.0 - 1.0)</label>
+                            <input type="number" id="add_interest_weight" placeholder="1.0" min="0" max="1" step="0.1" value="1.0" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                        </div>
+                    </div>
+                    <button onclick="addInterest()" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+                        Add Interest
+                    </button>
+                    <div id="add_interest_response" class="mt-3"></div>
+                </div>
+
+                <!-- DELETE /api/v1/users/me/interests/{tag} -->
+                <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">DELETE /api/v1/users/me/interests/{tag} - Remove Interest</h3>
+                    <div class="mb-3">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tag to Remove</label>
+                        <input type="text" id="remove_interest_tag" placeholder="yoga" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                    </div>
+                    <button onclick="removeInterest()" class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+                        Remove Interest
+                    </button>
+                    <div id="remove_interest_response" class="mt-3"></div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- User Settings Section -->
+        <section id="settings" class="flow-section bg-white rounded-lg shadow-lg overflow-hidden">
+            <div class="bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-4 flex items-center justify-between cursor-pointer" onclick="toggleSection('settings')">
+                <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                    ⚙️ User Settings
+                    <span class="text-sm font-normal opacity-90">(2 endpoints)</span>
+                </h2>
+                <svg class="w-6 h-6 text-white transition-transform" id="settings-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </div>
+            <div id="settings-content" class="p-6 space-y-6">
+
+                <!-- GET /api/v1/users/me/settings -->
+                <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">GET /api/v1/users/me/settings - Get Settings</h3>
+                    <button onclick="getSettings()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+                        Get My Settings
+                    </button>
+                    <div id="get_settings_response" class="mt-3"></div>
+                </div>
+
+                <!-- PATCH /api/v1/users/me/settings -->
+                <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">PATCH /api/v1/users/me/settings - Update Settings</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" id="setting_email_notifications" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500">
+                            <label class="text-sm font-medium text-gray-700">Email Notifications</label>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" id="setting_push_notifications" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500">
+                            <label class="text-sm font-medium text-gray-700">Push Notifications</label>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" id="setting_activity_reminders" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500">
+                            <label class="text-sm font-medium text-gray-700">Activity Reminders</label>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" id="setting_community_updates" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500">
+                            <label class="text-sm font-medium text-gray-700">Community Updates</label>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" id="setting_friend_requests" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500">
+                            <label class="text-sm font-medium text-gray-700">Friend Requests</label>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" id="setting_marketing_emails" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500">
+                            <label class="text-sm font-medium text-gray-700">Marketing Emails</label>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" id="setting_ghost_mode" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500">
+                            <label class="text-sm font-medium text-gray-700">Ghost Mode (Premium)</label>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Language</label>
+                            <input type="text" id="setting_language" placeholder="en" maxlength="10" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Timezone</label>
+                            <input type="text" id="setting_timezone" placeholder="Europe/Amsterdam" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                    </div>
+                    <button onclick="updateSettings()" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+                        Update Settings
+                    </button>
+                    <div id="update_settings_response" class="mt-3"></div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Subscription & Captain Section -->
+        <section id="subscription" class="flow-section bg-white rounded-lg shadow-lg overflow-hidden">
+            <div class="bg-gradient-to-r from-yellow-500 to-amber-600 px-6 py-4 flex items-center justify-between cursor-pointer" onclick="toggleSection('subscription')">
+                <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                    💎 Subscription & Captain
+                    <span class="text-sm font-normal opacity-90">(4 endpoints)</span>
+                </h2>
+                <svg class="w-6 h-6 text-white transition-transform" id="subscription-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </div>
+            <div id="subscription-content" class="p-6 space-y-6">
+
+                <!-- GET /api/v1/users/me/subscription -->
+                <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">GET /api/v1/users/me/subscription - Get Subscription</h3>
+                    <button onclick="getSubscription()" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+                        Get My Subscription
+                    </button>
+                    <div id="get_subscription_response" class="mt-3"></div>
+                </div>
+
+                <!-- POST /api/v1/users/me/subscription -->
+                <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">POST /api/v1/users/me/subscription - Update Subscription</h3>
+                    <div class="space-y-3 mb-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Subscription Level</label>
+                            <select id="subscription_level" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500">
+                                <option value="free">Free</option>
+                                <option value="club">Club</option>
+                                <option value="premium">Premium</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Expires At (optional)</label>
+                            <input type="datetime-local" id="subscription_expires_at" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">X-Payment-API-Key (optional)</label>
+                            <input type="text" id="payment_api_key" placeholder="dev-payment-key" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 font-mono text-sm">
+                        </div>
+                    </div>
+                    <button onclick="updateSubscription()" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+                        Update Subscription
+                    </button>
+                    <div id="update_subscription_response" class="mt-3"></div>
+                </div>
+
+                <!-- POST /api/v1/users/{user_id}/captain -->
+                <div class="border border-amber-200 rounded-lg p-4 bg-amber-50">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">POST /api/v1/users/{user_id}/captain - Grant Captain Status (Admin)</h3>
+                    <div class="mb-3">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">User ID</label>
+                        <input type="text" id="grant_captain_user_id" placeholder="00000000-0000-0000-0000-000000000000" class="w-full px-3 py-2 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 font-mono text-sm">
+                    </div>
+                    <button onclick="grantCaptain()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+                        🎖️ Grant Captain Status
+                    </button>
+                    <div id="grant_captain_response" class="mt-3"></div>
+                </div>
+
+                <!-- DELETE /api/v1/users/{user_id}/captain -->
+                <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">DELETE /api/v1/users/{user_id}/captain - Revoke Captain Status (Admin)</h3>
+                    <div class="mb-3">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">User ID</label>
+                        <input type="text" id="revoke_captain_user_id" placeholder="00000000-0000-0000-0000-000000000000" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 font-mono text-sm">
+                    </div>
+                    <button onclick="revokeCaptain()" class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+                        Revoke Captain Status
+                    </button>
+                    <div id="revoke_captain_response" class="mt-3"></div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Trust & Verification Section -->
+        <section id="verification" class="flow-section bg-white rounded-lg shadow-lg overflow-hidden">
+            <div class="bg-gradient-to-r from-teal-500 to-cyan-600 px-6 py-4 flex items-center justify-between cursor-pointer" onclick="toggleSection('verification')">
+                <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                    ✓ Trust & Verification
+                    <span class="text-sm font-normal opacity-90">(4 endpoints)</span>
+                </h2>
+                <svg class="w-6 h-6 text-white transition-transform" id="verification-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </div>
+            <div id="verification-content" class="p-6 space-y-6">
+
+                <!-- GET /api/v1/users/me/verification -->
+                <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">GET /api/v1/users/me/verification - Get Verification Metrics</h3>
+                    <button onclick="getVerificationMetrics()" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+                        Get Verification Metrics
+                    </button>
+                    <div id="get_verification_response" class="mt-3"></div>
+                </div>
+
+                <!-- POST /api/v1/users/{user_id}/verify -->
+                <div class="border border-teal-200 rounded-lg p-4 bg-teal-50">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">POST /api/v1/users/{user_id}/verify - Increment Verification (S2S)</h3>
+                    <div class="space-y-3 mb-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">User ID</label>
+                            <input type="text" id="verify_user_id" placeholder="00000000-0000-0000-0000-000000000000" class="w-full px-3 py-2 border border-teal-300 rounded-lg focus:ring-2 focus:ring-teal-500 font-mono text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">X-Service-API-Key</label>
+                            <input type="text" id="verify_service_key" placeholder="dev-activities-key" class="w-full px-3 py-2 border border-teal-300 rounded-lg focus:ring-2 focus:ring-teal-500 font-mono text-sm">
+                        </div>
+                    </div>
+                    <button onclick="incrementVerification()" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+                        Increment Verification Count
+                    </button>
+                    <div id="increment_verification_response" class="mt-3"></div>
+                </div>
+
+                <!-- POST /api/v1/users/{user_id}/no-show -->
+                <div class="border border-orange-200 rounded-lg p-4 bg-orange-50">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">POST /api/v1/users/{user_id}/no-show - Increment No-Show (S2S)</h3>
+                    <div class="space-y-3 mb-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">User ID</label>
+                            <input type="text" id="noshow_user_id" placeholder="00000000-0000-0000-0000-000000000000" class="w-full px-3 py-2 border border-orange-300 rounded-lg focus:ring-2 focus:ring-orange-500 font-mono text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">X-Service-API-Key</label>
+                            <input type="text" id="noshow_service_key" placeholder="dev-activities-key" class="w-full px-3 py-2 border border-orange-300 rounded-lg focus:ring-2 focus:ring-orange-500 font-mono text-sm">
+                        </div>
+                    </div>
+                    <button onclick="incrementNoShow()" class="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+                        Increment No-Show Count
+                    </button>
+                    <div id="increment_noshow_response" class="mt-3"></div>
+                </div>
+
+                <!-- POST /api/v1/users/{user_id}/activity-counters -->
+                <div class="border border-cyan-200 rounded-lg p-4 bg-cyan-50">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">POST /api/v1/users/{user_id}/activity-counters - Update Activity Counters (S2S)</h3>
+                    <div class="space-y-3 mb-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">User ID</label>
+                            <input type="text" id="counters_user_id" placeholder="00000000-0000-0000-0000-000000000000" class="w-full px-3 py-2 border border-cyan-300 rounded-lg focus:ring-2 focus:ring-cyan-500 font-mono text-sm">
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Created Delta (-100 to 100)</label>
+                                <input type="number" id="counters_created_delta" placeholder="5" min="-100" max="100" class="w-full px-3 py-2 border border-cyan-300 rounded-lg focus:ring-2 focus:ring-cyan-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Attended Delta (-100 to 100)</label>
+                                <input type="number" id="counters_attended_delta" placeholder="3" min="-100" max="100" class="w-full px-3 py-2 border border-cyan-300 rounded-lg focus:ring-2 focus:ring-cyan-500">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">X-Service-API-Key</label>
+                            <input type="text" id="counters_service_key" placeholder="dev-activities-key" class="w-full px-3 py-2 border border-cyan-300 rounded-lg focus:ring-2 focus:ring-cyan-500 font-mono text-sm">
+                        </div>
+                    </div>
+                    <button onclick="updateActivityCounters()" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+                        Update Activity Counters
+                    </button>
+                    <div id="update_counters_response" class="mt-3"></div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Search & Activity Section -->
+        <section id="search" class="flow-section bg-white rounded-lg shadow-lg overflow-hidden">
+            <div class="bg-gradient-to-r from-violet-500 to-purple-600 px-6 py-4 flex items-center justify-between cursor-pointer" onclick="toggleSection('search')">
+                <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                    🔍 Search & Activity
+                    <span class="text-sm font-normal opacity-90">(2 endpoints)</span>
+                </h2>
+                <svg class="w-6 h-6 text-white transition-transform" id="search-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </div>
+            <div id="search-content" class="p-6 space-y-6">
+
+                <!-- GET /api/v1/users/search -->
+                <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">GET /api/v1/users/search - Search Users</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Search Query <span class="text-xs text-gray-500">(min 2 chars)</span></label>
+                            <input type="text" id="search_query" placeholder="john" minlength="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Limit (max 100)</label>
+                            <input type="number" id="search_limit" placeholder="20" min="1" max="100" value="20" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Offset</label>
+                            <input type="number" id="search_offset" placeholder="0" min="0" value="0" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500">
+                        </div>
+                    </div>
+                    <button onclick="searchUsers()" class="w-full bg-violet-600 hover:bg-violet-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+                        Search Users
+                    </button>
+                    <div id="search_users_response" class="mt-3"></div>
+                </div>
+
+                <!-- POST /api/v1/users/me/heartbeat -->
+                <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">POST /api/v1/users/me/heartbeat - Update Last Seen</h3>
+                    <p class="text-sm text-gray-600 mb-3">Updates the last_seen_at timestamp to current time</p>
+                    <button onclick="updateHeartbeat()" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+                        Send Heartbeat
+                    </button>
+                    <div id="update_heartbeat_response" class="mt-3"></div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Admin Moderation Section -->
+        <section id="admin" class="flow-section bg-white rounded-lg shadow-lg overflow-hidden">
+            <div class="bg-gradient-to-r from-red-500 to-rose-600 px-6 py-4 flex items-center justify-between cursor-pointer" onclick="toggleSection('admin')">
+                <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                    🛡️ Admin Moderation
+                    <span class="text-sm font-normal opacity-90">(4 endpoints)</span>
+                </h2>
+                <svg class="w-6 h-6 text-white transition-transform" id="admin-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </div>
+            <div id="admin-content" class="p-6 space-y-6">
+
+                <!-- GET /api/v1/admin/users/photo-moderation -->
+                <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">GET /api/v1/admin/users/photo-moderation - Get Pending Photos</h3>
+                    <div class="grid grid-cols-2 gap-3 mb-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Limit (max 200)</label>
+                            <input type="number" id="photo_mod_limit" placeholder="50" min="1" max="200" value="50" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Offset</label>
+                            <input type="number" id="photo_mod_offset" placeholder="0" min="0" value="0" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
+                        </div>
+                    </div>
+                    <button onclick="getPendingPhotos()" class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+                        Get Pending Photo Moderations
+                    </button>
+                    <div id="get_pending_photos_response" class="mt-3"></div>
+                </div>
+
+                <!-- POST /api/v1/admin/users/{user_id}/photo-moderation -->
+                <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">POST /api/v1/admin/users/{user_id}/photo-moderation - Moderate Photo</h3>
+                    <div class="space-y-3 mb-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">User ID</label>
+                            <input type="text" id="moderate_photo_user_id" placeholder="00000000-0000-0000-0000-000000000000" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 font-mono text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Moderation Status</label>
+                            <select id="moderate_photo_status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
+                                <option value="pending">Pending</option>
+                                <option value="approved">Approved</option>
+                                <option value="rejected">Rejected</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button onclick="moderatePhoto()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+                        Moderate Photo
+                    </button>
+                    <div id="moderate_photo_response" class="mt-3"></div>
+                </div>
+
+                <!-- POST /api/v1/admin/users/{user_id}/ban -->
+                <div class="border border-red-300 rounded-lg p-4 bg-red-50">
+                    <h3 class="text-lg font-semibold text-red-800 mb-3">POST /api/v1/admin/users/{user_id}/ban - Ban User</h3>
+                    <div class="space-y-3 mb-3">
+                        <div>
+                            <label class="block text-sm font-medium text-red-700 mb-1">User ID</label>
+                            <input type="text" id="ban_user_id" placeholder="00000000-0000-0000-0000-000000000000" class="w-full px-3 py-2 border border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 font-mono text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-red-700 mb-1">Reason (max 1000 chars)</label>
+                            <textarea id="ban_reason" placeholder="Violation of community guidelines..." maxlength="1000" rows="3" class="w-full px-3 py-2 border border-red-300 rounded-lg focus:ring-2 focus:ring-red-500"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-red-700 mb-1">Expires At (optional - leave empty for permanent)</label>
+                            <input type="datetime-local" id="ban_expires_at" class="w-full px-3 py-2 border border-red-300 rounded-lg focus:ring-2 focus:ring-red-500">
+                        </div>
+                    </div>
+                    <button onclick="banUser()" class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+                        ⚠️ Ban User
+                    </button>
+                    <div id="ban_user_response" class="mt-3"></div>
+                </div>
+
+                <!-- DELETE /api/v1/admin/users/{user_id}/ban -->
+                <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">DELETE /api/v1/admin/users/{user_id}/ban - Unban User</h3>
+                    <div class="mb-3">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">User ID</label>
+                        <input type="text" id="unban_user_id" placeholder="00000000-0000-0000-0000-000000000000" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 font-mono text-sm">
+                    </div>
+                    <button onclick="unbanUser()" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+                        Unban User
+                    </button>
+                    <div id="unban_user_response" class="mt-3"></div>
+                </div>
+
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-gray-300 mt-12 py-6">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <p class="text-sm">User Profile API Testing Interface v1.0.0</p>
+            <p class="text-xs text-gray-400 mt-1">For development and testing purposes only • 28 endpoints covered</p>
+            <p class="text-xs text-gray-500 mt-2">
+                <a href="/test/auth" class="text-blue-400 hover:underline">🔐 Auth API Tests</a> |
+                <a href="/docs" class="text-blue-400 hover:underline">📚 API Docs</a>
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        // API Base URL
+        const API_BASE = 'http://localhost:8008';
+
+        // Storage keys
+        const STORAGE = {
+            ACCESS_TOKEN: 'auth_test_access_token',
+            USER_ID: 'auth_test_user_id',
+        };
+
+        // Toggle section collapse
+        function toggleSection(sectionId) {
+            const content = document.getElementById(`${sectionId}-content`);
+            const arrow = document.getElementById(`${sectionId}-arrow`);
+
+            if (content.classList.contains('section-collapsed')) {
+                content.classList.remove('section-collapsed');
+                arrow.classList.remove('rotate-180');
+            } else {
+                content.classList.add('section-collapsed');
+                arrow.classList.add('rotate-180');
+            }
+        }
+
+        // Token management
+        function copyFromAuthTest() {
+            const token = localStorage.getItem(STORAGE.ACCESS_TOKEN);
+            if (token) {
+                document.getElementById('bearer_token').value = token;
+                saveToken();
+                alert('Token copied from Auth Test!');
+            } else {
+                alert('No token found. Please complete login in Auth Test first.');
+            }
+        }
+
+        function saveToken() {
+            const token = document.getElementById('bearer_token').value.trim();
+            if (token) {
+                localStorage.setItem(STORAGE.ACCESS_TOKEN, token);
+                updateTokenStatus();
+                alert('Token saved!');
+            }
+        }
+
+        function clearToken() {
+            if (confirm('Clear stored token?')) {
+                localStorage.removeItem(STORAGE.ACCESS_TOKEN);
+                document.getElementById('bearer_token').value = '';
+                updateTokenStatus();
+            }
+        }
+
+        function updateTokenStatus() {
+            const token = document.getElementById('bearer_token').value.trim() || localStorage.getItem(STORAGE.ACCESS_TOKEN);
+            const statusEl = document.getElementById('token_status');
+            const infoEl = document.getElementById('token_info');
+
+            if (!token) {
+                statusEl.textContent = 'Not Set';
+                statusEl.className = 'text-xs px-2 py-1 rounded-full bg-gray-200 text-gray-600';
+                infoEl.textContent = '';
+                return;
+            }
+
+            try {
+                const parts = token.split('.');
+                if (parts.length === 3) {
+                    const payload = JSON.parse(atob(parts[1]));
+                    const exp = payload.exp * 1000;
+                    const now = Date.now();
+
+                    if (exp > now) {
+                        const remaining = Math.floor((exp - now) / 1000 / 60);
+                        statusEl.textContent = `Valid (${remaining}m remaining)`;
+                        statusEl.className = 'text-xs px-2 py-1 rounded-full bg-green-200 text-green-800';
+                        infoEl.textContent = `User ID: ${payload.user_id || 'N/A'} | Role: ${payload.role || 'N/A'} | Sub: ${payload.subscription_level || 'N/A'}`;
+                    } else {
+                        statusEl.textContent = 'Expired';
+                        statusEl.className = 'text-xs px-2 py-1 rounded-full bg-red-200 text-red-800';
+                        infoEl.textContent = 'Token expired. Please login again.';
+                    }
+                } else {
+                    statusEl.textContent = 'Invalid Format';
+                    statusEl.className = 'text-xs px-2 py-1 rounded-full bg-yellow-200 text-yellow-800';
+                }
+            } catch (e) {
+                statusEl.textContent = 'Invalid';
+                statusEl.className = 'text-xs px-2 py-1 rounded-full bg-red-200 text-red-800';
+            }
+        }
+
+        // Helper: Display response
+        function displayResponse(elementId, data, isError = false) {
+            const element = document.getElementById(elementId);
+            const bgColor = isError ? 'bg-red-50 border-red-300' : 'bg-green-50 border-green-300';
+            const textColor = isError ? 'text-red-900' : 'text-green-900';
+
+            element.innerHTML = `
+                <div class="p-3 rounded-lg border ${bgColor} ${textColor}">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="font-semibold">${isError ? '❌ Error' : '✅ Success'}</span>
+                        <span class="text-xs opacity-75">${new Date().toLocaleTimeString()}</span>
+                    </div>
+                    <pre class="response-box text-xs mt-2 overflow-x-auto">${JSON.stringify(data, null, 2)}</pre>
+                </div>
+            `;
+        }
+
+        // Helper: Make API call with Bearer token
+        async function apiCall(endpoint, method = 'GET', body = null, extraHeaders = {}) {
+            const token = localStorage.getItem(STORAGE.ACCESS_TOKEN);
+
+            if (!token && !extraHeaders['X-Service-API-Key'] && !extraHeaders['X-Payment-API-Key']) {
+                return { success: false, error: { message: 'No bearer token set. Please login first or copy token from Auth Test.' } };
+            }
+
+            try {
+                const options = {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...extraHeaders,
+                    }
+                };
+
+                if (token) {
+                    options.headers['Authorization'] = `Bearer ${token}`;
+                }
+
+                if (body) {
+                    options.body = JSON.stringify(body);
+                }
+
+                const response = await fetch(`${API_BASE}${endpoint}`, options);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw { status: response.status, ...data };
+                }
+
+                return { success: true, data };
+            } catch (error) {
+                return { success: false, error };
+            }
+        }
+
+        // Profile Management Functions
+        async function getMyProfile() {
+            const result = await apiCall('/api/v1/users/me', 'GET');
+            if (result.success) {
+                displayResponse('get_my_profile_response', result.data);
+                if (result.data.user_id) {
+                    localStorage.setItem(STORAGE.USER_ID, result.data.user_id);
+                }
+            } else {
+                displayResponse('get_my_profile_response', result.error, true);
+            }
+        }
+
+        async function updateProfile() {
+            const body = {};
+
+            const firstName = document.getElementById('update_first_name').value;
+            const lastName = document.getElementById('update_last_name').value;
+            const description = document.getElementById('update_description').value;
+            const dob = document.getElementById('update_dob').value;
+            const gender = document.getElementById('update_gender').value;
+
+            if (firstName) body.first_name = firstName;
+            if (lastName) body.last_name = lastName;
+            if (description) body.profile_description = description;
+            if (dob) body.date_of_birth = dob;
+            if (gender) body.gender = gender;
+
+            if (Object.keys(body).length === 0) {
+                displayResponse('update_profile_response', { error: 'At least one field required' }, true);
+                return;
+            }
+
+            const result = await apiCall('/api/v1/users/me', 'PATCH', body);
+            if (result.success) {
+                displayResponse('update_profile_response', result.data);
+            } else {
+                displayResponse('update_profile_response', result.error, true);
+            }
+        }
+
+        async function getPublicProfile() {
+            const userId = document.getElementById('public_user_id').value.trim();
+            if (!userId) {
+                displayResponse('get_public_profile_response', { error: 'User ID required' }, true);
+                return;
+            }
+
+            const result = await apiCall(`/api/v1/users/${userId}`, 'GET');
+            if (result.success) {
+                displayResponse('get_public_profile_response', result.data);
+            } else {
+                displayResponse('get_public_profile_response', result.error, true);
+            }
+        }
+
+        async function updateUsername() {
+            const newUsername = document.getElementById('new_username').value.trim();
+            if (!newUsername) {
+                displayResponse('update_username_response', { error: 'New username required' }, true);
+                return;
+            }
+
+            const result = await apiCall('/api/v1/users/me/username', 'PATCH', { new_username: newUsername });
+            if (result.success) {
+                displayResponse('update_username_response', result.data);
+            } else {
+                displayResponse('update_username_response', result.error, true);
+            }
+        }
+
+        async function deleteAccount() {
+            const password = document.getElementById('delete_password').value;
+            const confirmation = document.getElementById('delete_confirmation').value;
+
+            if (!password || !confirmation) {
+                displayResponse('delete_account_response', { error: 'Password and confirmation required' }, true);
+                return;
+            }
+
+            if (confirmation !== 'DELETE MY ACCOUNT') {
+                displayResponse('delete_account_response', { error: 'Confirmation must be exactly: DELETE MY ACCOUNT' }, true);
+                return;
+            }
+
+            if (!confirm('⚠️ Are you sure? This will soft-delete your account!')) {
+                return;
+            }
+
+            const result = await apiCall('/api/v1/users/me', 'DELETE', { password, confirmation });
+            if (result.success) {
+                displayResponse('delete_account_response', result.data);
+            } else {
+                displayResponse('delete_account_response', result.error, true);
+            }
+        }
+
+        // Photo Management Functions
+        async function setMainPhoto() {
+            const photoUrl = document.getElementById('main_photo_url').value.trim();
+            if (!photoUrl) {
+                displayResponse('set_main_photo_response', { error: 'Photo URL required' }, true);
+                return;
+            }
+
+            const result = await apiCall('/api/v1/users/me/photos/main', 'POST', { photo_url: photoUrl });
+            if (result.success) {
+                displayResponse('set_main_photo_response', result.data);
+            } else {
+                displayResponse('set_main_photo_response', result.error, true);
+            }
+        }
+
+        async function addPhoto() {
+            const photoUrl = document.getElementById('add_photo_url').value.trim();
+            if (!photoUrl) {
+                displayResponse('add_photo_response', { error: 'Photo URL required' }, true);
+                return;
+            }
+
+            const result = await apiCall('/api/v1/users/me/photos', 'POST', { photo_url: photoUrl });
+            if (result.success) {
+                displayResponse('add_photo_response', result.data);
+            } else {
+                displayResponse('add_photo_response', result.error, true);
+            }
+        }
+
+        async function removePhoto() {
+            const photoUrl = document.getElementById('remove_photo_url').value.trim();
+            if (!photoUrl) {
+                displayResponse('remove_photo_response', { error: 'Photo URL required' }, true);
+                return;
+            }
+
+            const result = await apiCall('/api/v1/users/me/photos', 'DELETE', { photo_url: photoUrl });
+            if (result.success) {
+                displayResponse('remove_photo_response', result.data);
+            } else {
+                displayResponse('remove_photo_response', result.error, true);
+            }
+        }
+
+        // Interest Tags Functions
+        async function getInterests() {
+            const result = await apiCall('/api/v1/users/me/interests', 'GET');
+            if (result.success) {
+                displayResponse('get_interests_response', result.data);
+            } else {
+                displayResponse('get_interests_response', result.error, true);
+            }
+        }
+
+        function fillSampleInterests() {
+            const sample = [
+                {"tag": "hiking", "weight": 1.0},
+                {"tag": "photography", "weight": 0.8},
+                {"tag": "cooking", "weight": 0.6},
+                {"tag": "yoga", "weight": 0.9},
+                {"tag": "reading", "weight": 0.7}
+            ];
+            document.getElementById('set_interests_json').value = JSON.stringify(sample, null, 2);
+        }
+
+        async function setInterests() {
+            const jsonText = document.getElementById('set_interests_json').value.trim();
+            if (!jsonText) {
+                displayResponse('set_interests_response', { error: 'Interests JSON required' }, true);
+                return;
+            }
+
+            try {
+                const interests = JSON.parse(jsonText);
+                const result = await apiCall('/api/v1/users/me/interests', 'PUT', { interests });
+                if (result.success) {
+                    displayResponse('set_interests_response', result.data);
+                } else {
+                    displayResponse('set_interests_response', result.error, true);
+                }
+            } catch (e) {
+                displayResponse('set_interests_response', { error: 'Invalid JSON: ' + e.message }, true);
+            }
+        }
+
+        async function addInterest() {
+            const tag = document.getElementById('add_interest_tag').value.trim();
+            const weight = parseFloat(document.getElementById('add_interest_weight').value);
+
+            if (!tag) {
+                displayResponse('add_interest_response', { error: 'Tag required' }, true);
+                return;
+            }
+
+            const result = await apiCall('/api/v1/users/me/interests', 'POST', { tag, weight });
+            if (result.success) {
+                displayResponse('add_interest_response', result.data);
+            } else {
+                displayResponse('add_interest_response', result.error, true);
+            }
+        }
+
+        async function removeInterest() {
+            const tag = document.getElementById('remove_interest_tag').value.trim();
+            if (!tag) {
+                displayResponse('remove_interest_response', { error: 'Tag required' }, true);
+                return;
+            }
+
+            const result = await apiCall(`/api/v1/users/me/interests/${encodeURIComponent(tag)}`, 'DELETE');
+            if (result.success) {
+                displayResponse('remove_interest_response', result.data);
+            } else {
+                displayResponse('remove_interest_response', result.error, true);
+            }
+        }
+
+        // Settings Functions
+        async function getSettings() {
+            const result = await apiCall('/api/v1/users/me/settings', 'GET');
+            if (result.success) {
+                displayResponse('get_settings_response', result.data);
+            } else {
+                displayResponse('get_settings_response', result.error, true);
+            }
+        }
+
+        async function updateSettings() {
+            const body = {};
+
+            const emailNotif = document.getElementById('setting_email_notifications');
+            const pushNotif = document.getElementById('setting_push_notifications');
+            const activityRem = document.getElementById('setting_activity_reminders');
+            const communityUpd = document.getElementById('setting_community_updates');
+            const friendReq = document.getElementById('setting_friend_requests');
+            const marketing = document.getElementById('setting_marketing_emails');
+            const ghostMode = document.getElementById('setting_ghost_mode');
+            const language = document.getElementById('setting_language').value.trim();
+            const timezone = document.getElementById('setting_timezone').value.trim();
+
+            if (emailNotif.checked !== emailNotif.indeterminate) body.email_notifications = emailNotif.checked;
+            if (pushNotif.checked !== pushNotif.indeterminate) body.push_notifications = pushNotif.checked;
+            if (activityRem.checked !== activityRem.indeterminate) body.activity_reminders = activityRem.checked;
+            if (communityUpd.checked !== communityUpd.indeterminate) body.community_updates = communityUpd.checked;
+            if (friendReq.checked !== friendReq.indeterminate) body.friend_requests = friendReq.checked;
+            if (marketing.checked !== marketing.indeterminate) body.marketing_emails = marketing.checked;
+            if (ghostMode.checked !== ghostMode.indeterminate) body.ghost_mode = ghostMode.checked;
+            if (language) body.language = language;
+            if (timezone) body.timezone = timezone;
+
+            if (Object.keys(body).length === 0) {
+                displayResponse('update_settings_response', { error: 'At least one setting required' }, true);
+                return;
+            }
+
+            const result = await apiCall('/api/v1/users/me/settings', 'PATCH', body);
+            if (result.success) {
+                displayResponse('update_settings_response', result.data);
+            } else {
+                displayResponse('update_settings_response', result.error, true);
+            }
+        }
+
+        // Subscription Functions
+        async function getSubscription() {
+            const result = await apiCall('/api/v1/users/me/subscription', 'GET');
+            if (result.success) {
+                displayResponse('get_subscription_response', result.data);
+            } else {
+                displayResponse('get_subscription_response', result.error, true);
+            }
+        }
+
+        async function updateSubscription() {
+            const level = document.getElementById('subscription_level').value;
+            const expiresAt = document.getElementById('subscription_expires_at').value;
+            const paymentKey = document.getElementById('payment_api_key').value.trim();
+
+            const body = { subscription_level: level };
+            if (expiresAt) {
+                body.subscription_expires_at = new Date(expiresAt).toISOString();
+            }
+
+            const extraHeaders = {};
+            if (paymentKey) {
+                extraHeaders['X-Payment-API-Key'] = paymentKey;
+            }
+
+            const result = await apiCall('/api/v1/users/me/subscription', 'POST', body, extraHeaders);
+            if (result.success) {
+                displayResponse('update_subscription_response', result.data);
+            } else {
+                displayResponse('update_subscription_response', result.error, true);
+            }
+        }
+
+        async function grantCaptain() {
+            const userId = document.getElementById('grant_captain_user_id').value.trim();
+            if (!userId) {
+                displayResponse('grant_captain_response', { error: 'User ID required' }, true);
+                return;
+            }
+
+            const result = await apiCall(`/api/v1/users/${userId}/captain`, 'POST', { is_captain: true });
+            if (result.success) {
+                displayResponse('grant_captain_response', result.data);
+            } else {
+                displayResponse('grant_captain_response', result.error, true);
+            }
+        }
+
+        async function revokeCaptain() {
+            const userId = document.getElementById('revoke_captain_user_id').value.trim();
+            if (!userId) {
+                displayResponse('revoke_captain_response', { error: 'User ID required' }, true);
+                return;
+            }
+
+            const result = await apiCall(`/api/v1/users/${userId}/captain`, 'DELETE');
+            if (result.success) {
+                displayResponse('revoke_captain_response', result.data);
+            } else {
+                displayResponse('revoke_captain_response', result.error, true);
+            }
+        }
+
+        // Verification Functions
+        async function getVerificationMetrics() {
+            const result = await apiCall('/api/v1/users/me/verification', 'GET');
+            if (result.success) {
+                displayResponse('get_verification_response', result.data);
+            } else {
+                displayResponse('get_verification_response', result.error, true);
+            }
+        }
+
+        async function incrementVerification() {
+            const userId = document.getElementById('verify_user_id').value.trim();
+            const serviceKey = document.getElementById('verify_service_key').value.trim();
+
+            if (!userId || !serviceKey) {
+                displayResponse('increment_verification_response', { error: 'User ID and Service Key required' }, true);
+                return;
+            }
+
+            const result = await apiCall(`/api/v1/users/${userId}/verify`, 'POST', null, { 'X-Service-API-Key': serviceKey });
+            if (result.success) {
+                displayResponse('increment_verification_response', result.data);
+            } else {
+                displayResponse('increment_verification_response', result.error, true);
+            }
+        }
+
+        async function incrementNoShow() {
+            const userId = document.getElementById('noshow_user_id').value.trim();
+            const serviceKey = document.getElementById('noshow_service_key').value.trim();
+
+            if (!userId || !serviceKey) {
+                displayResponse('increment_noshow_response', { error: 'User ID and Service Key required' }, true);
+                return;
+            }
+
+            const result = await apiCall(`/api/v1/users/${userId}/no-show`, 'POST', null, { 'X-Service-API-Key': serviceKey });
+            if (result.success) {
+                displayResponse('increment_noshow_response', result.data);
+            } else {
+                displayResponse('increment_noshow_response', result.error, true);
+            }
+        }
+
+        async function updateActivityCounters() {
+            const userId = document.getElementById('counters_user_id').value.trim();
+            const createdDelta = parseInt(document.getElementById('counters_created_delta').value);
+            const attendedDelta = parseInt(document.getElementById('counters_attended_delta').value);
+            const serviceKey = document.getElementById('counters_service_key').value.trim();
+
+            if (!userId || !serviceKey || isNaN(createdDelta) || isNaN(attendedDelta)) {
+                displayResponse('update_counters_response', { error: 'All fields required' }, true);
+                return;
+            }
+
+            const body = {
+                created_delta: createdDelta,
+                attended_delta: attendedDelta
+            };
+
+            const result = await apiCall(`/api/v1/users/${userId}/activity-counters`, 'POST', body, { 'X-Service-API-Key': serviceKey });
+            if (result.success) {
+                displayResponse('update_counters_response', result.data);
+            } else {
+                displayResponse('update_counters_response', result.error, true);
+            }
+        }
+
+        // Search Functions
+        async function searchUsers() {
+            const query = document.getElementById('search_query').value.trim();
+            const limit = parseInt(document.getElementById('search_limit').value) || 20;
+            const offset = parseInt(document.getElementById('search_offset').value) || 0;
+
+            if (!query || query.length < 2) {
+                displayResponse('search_users_response', { error: 'Query must be at least 2 characters' }, true);
+                return;
+            }
+
+            const params = new URLSearchParams({ q: query, limit, offset });
+            const result = await apiCall(`/api/v1/users/search?${params}`, 'GET');
+            if (result.success) {
+                displayResponse('search_users_response', result.data);
+            } else {
+                displayResponse('search_users_response', result.error, true);
+            }
+        }
+
+        async function updateHeartbeat() {
+            const result = await apiCall('/api/v1/users/me/heartbeat', 'POST');
+            if (result.success) {
+                displayResponse('update_heartbeat_response', result.data);
+            } else {
+                displayResponse('update_heartbeat_response', result.error, true);
+            }
+        }
+
+        // Admin Functions
+        async function getPendingPhotos() {
+            const limit = parseInt(document.getElementById('photo_mod_limit').value) || 50;
+            const offset = parseInt(document.getElementById('photo_mod_offset').value) || 0;
+
+            const params = new URLSearchParams({ limit, offset });
+            const result = await apiCall(`/api/v1/admin/users/photo-moderation?${params}`, 'GET');
+            if (result.success) {
+                displayResponse('get_pending_photos_response', result.data);
+            } else {
+                displayResponse('get_pending_photos_response', result.error, true);
+            }
+        }
+
+        async function moderatePhoto() {
+            const userId = document.getElementById('moderate_photo_user_id').value.trim();
+            const status = document.getElementById('moderate_photo_status').value;
+
+            if (!userId) {
+                displayResponse('moderate_photo_response', { error: 'User ID required' }, true);
+                return;
+            }
+
+            const result = await apiCall(`/api/v1/admin/users/${userId}/photo-moderation`, 'POST', { status });
+            if (result.success) {
+                displayResponse('moderate_photo_response', result.data);
+            } else {
+                displayResponse('moderate_photo_response', result.error, true);
+            }
+        }
+
+        async function banUser() {
+            const userId = document.getElementById('ban_user_id').value.trim();
+            const reason = document.getElementById('ban_reason').value.trim();
+            const expiresAt = document.getElementById('ban_expires_at').value;
+
+            if (!userId || !reason) {
+                displayResponse('ban_user_response', { error: 'User ID and reason required' }, true);
+                return;
+            }
+
+            const body = { reason };
+            if (expiresAt) {
+                body.expires_at = new Date(expiresAt).toISOString();
+            }
+
+            const result = await apiCall(`/api/v1/admin/users/${userId}/ban`, 'POST', body);
+            if (result.success) {
+                displayResponse('ban_user_response', result.data);
+            } else {
+                displayResponse('ban_user_response', result.error, true);
+            }
+        }
+
+        async function unbanUser() {
+            const userId = document.getElementById('unban_user_id').value.trim();
+            if (!userId) {
+                displayResponse('unban_user_response', { error: 'User ID required' }, true);
+                return;
+            }
+
+            const result = await apiCall(`/api/v1/admin/users/${userId}/ban`, 'DELETE');
+            if (result.success) {
+                displayResponse('unban_user_response', result.data);
+            } else {
+                displayResponse('unban_user_response', result.error, true);
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load token from storage
+            const storedToken = localStorage.getItem(STORAGE.ACCESS_TOKEN);
+            if (storedToken) {
+                document.getElementById('bearer_token').value = storedToken;
+            }
+            updateTokenStatus();
+
+            // Update token status every 30 seconds
+            setInterval(updateTokenStatus, 30000);
+        });
+    </script>
+</body>
+</html>

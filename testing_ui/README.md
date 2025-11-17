@@ -1,6 +1,6 @@
-# Authentication Testing UI
+# API Testing Suite
 
-A standalone web-based interface for manually testing all authentication flows of the Auth API.
+A standalone web-based interface for manually testing the Auth API and User Profile API.
 
 ## 🎯 Purpose
 
@@ -33,9 +33,11 @@ cd /mnt/d/activity/testing_ui
 - Connects to `activity-network` to communicate with auth-api
 - Runs completely independently from auth-api
 
-**Access the testing page:**
+**Access the testing pages:**
 ```
-http://localhost:8099/test/auth
+http://localhost:8099/                    # Landing page
+http://localhost:8099/test/auth           # Auth API tests
+http://localhost:8099/test/userprofile    # User Profile API tests
 ```
 
 **Useful commands:**
@@ -55,7 +57,9 @@ curl http://localhost:8099/health
 
 ## 📋 Features
 
-### Supported Authentication Flows
+### 🔐 Auth API Testing
+
+#### Supported Authentication Flows
 
 #### 1️⃣ **Registration Flow** (2 steps)
 - **Step 1**: Create account with email & password
@@ -74,6 +78,54 @@ curl http://localhost:8099/health
 - Refresh access tokens
 - Logout (invalidate refresh tokens)
 
+### 👤 User Profile API Testing
+
+Comprehensive testing interface for all 28 User Profile API endpoints:
+
+#### 1️⃣ **Profile Management** (5 endpoints)
+- Get my profile
+- Update profile (name, description, DOB, gender)
+- Get public profile by user ID
+- Update username (rate limited: 3/hour)
+- Delete account (soft delete)
+
+#### 2️⃣ **Photo Management** (3 endpoints)
+- Set main photo (requires moderation)
+- Add extra photos (max 5)
+- Remove photos
+
+#### 3️⃣ **Interest Tags** (4 endpoints)
+- Get interests
+- Bulk replace interests (max 20)
+- Add single interest with weight
+- Remove interest by tag
+
+#### 4️⃣ **User Settings** (2 endpoints)
+- Get all settings
+- Update settings (notifications, ghost mode, language, timezone)
+
+#### 5️⃣ **Subscription & Captain** (4 endpoints)
+- Get subscription details
+- Update subscription (with payment API key)
+- Grant captain status (admin)
+- Revoke captain status (admin)
+
+#### 6️⃣ **Trust & Verification** (4 endpoints)
+- Get verification metrics
+- Increment verification count (S2S)
+- Increment no-show count (S2S)
+- Update activity counters (S2S)
+
+#### 7️⃣ **Search & Activity** (2 endpoints)
+- Search users by query
+- Update heartbeat (last seen)
+
+#### 8️⃣ **Admin Moderation** (4 endpoints)
+- Get pending photo moderations
+- Moderate photos (approve/reject)
+- Ban user (temporary or permanent)
+- Unban user
+
 ### UI Features
 
 ✅ **Auto-fill**: Automatically populates tokens/IDs from previous responses
@@ -83,6 +135,10 @@ curl http://localhost:8099/health
 ✅ **Visual Feedback**: Color-coded success (green) / error (red) responses
 ✅ **Sticky Navigation**: Quick jump to different flows
 ✅ **Stored Data View**: See all currently stored tokens and session data
+✅ **Collapsible Sections**: Organized sections for easy navigation
+✅ **Token Management**: Auto-detect expiry, JWT decoder, one-click copy from Auth test
+✅ **S2S Headers**: Support for X-Service-API-Key and X-Payment-API-Key headers
+✅ **Validation Hints**: Real-time validation feedback for form fields
 
 ## 🎨 Interface Sections
 
@@ -154,17 +210,18 @@ With this setting, you'll receive tokens directly from the first login request.
 
 ```
 testing_ui/
-├── __init__.py           # Module initialization
-├── router.py             # FastAPI router
-├── standalone.py         # Standalone FastAPI app
-├── start.sh              # Quick start script (Docker)
-├── Dockerfile            # Docker image definition
-├── docker-compose.yml    # Docker Compose configuration
-├── requirements.txt      # Python dependencies
-├── .dockerignore         # Docker ignore file
+├── __init__.py                  # Module initialization
+├── router.py                    # FastAPI router (both test pages)
+├── standalone.py                # Standalone FastAPI app
+├── start.sh                     # Quick start script (Docker)
+├── Dockerfile                   # Docker image definition
+├── docker-compose.yml           # Docker Compose configuration
+├── requirements.txt             # Python dependencies
+├── .dockerignore                # Docker ignore file
 ├── templates/
-│   └── auth_test.html    # Jinja2 template with Tailwind CSS
-└── README.md            # This file
+│   ├── auth_test.html           # Auth API testing interface
+│   └── userprofile_test.html   # User Profile API testing interface (28 endpoints)
+└── README.md                    # This file
 ```
 
 ### Technology Stack
