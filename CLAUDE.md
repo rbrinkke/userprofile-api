@@ -100,6 +100,34 @@ flake8 app/
 mypy app/
 ```
 
+### Testing UI
+
+A standalone web-based testing interface is available for manual API testing:
+
+```bash
+# Start testing UI (requires userprofile-api to be running)
+cd testing_ui
+./start.sh
+
+# Access testing interface
+open http://localhost:8099/test/userprofile
+
+# View testing UI logs
+docker logs -f auth-testing-ui
+
+# Stop testing UI
+cd testing_ui && docker compose down
+```
+
+The testing UI provides visual testing for all 28 endpoints with features like:
+- Auto-fill tokens/IDs from previous responses
+- Local storage for session persistence
+- Formatted JSON responses with timestamps
+- Support for S2S authentication headers
+- Real-time validation feedback
+
+See `testing_ui/README.md` for complete documentation.
+
 ## Architecture Principles
 
 ### 1. Stored Procedure First (CRITICAL)
@@ -141,10 +169,11 @@ result = await db.fetch_one(
    - Transform database results to response models
 
 3. **Core** (`app/core/`) - Shared utilities
-   - `database.py` - Connection pool management
+   - `database.py` - Connection pool management (asyncpg)
    - `cache.py` - Redis operations
    - `security.py` - JWT validation
    - `logging_config.py` - Structured logging
+   - `exceptions.py` - Custom exception classes
 
 Example flow:
 ```
@@ -381,6 +410,67 @@ async def new_operation_endpoint(
     return NewOperationResponse.from_db(result)
 ```
 
+### Adding New API Endpoints
+
+**Step-by-step process:**
+
+1. **Define schemas** in `app/schemas/`:
+```python
+# app/schemas/new_feature.py
+from pydantic import BaseModel
+from uuid import UUID
+
+class NewFeatureRequest(BaseModel):
+    field1: str
+    field2: int
+
+class NewFeatureResponse(BaseModel):
+    success: bool
+    data: dict
+```
+
+2. **Create service method** in `app/services/`:
+```python
+# app/services/new_feature_service.py
+class NewFeatureService:
+    async def do_something(self, user_id: UUID, request: NewFeatureRequest):
+        # Call stored procedure
+        result = await db.fetch_one(
+            "SELECT * FROM activity.sp_new_feature($1, $2)",
+            user_id,
+            request.field1
+        )
+        return result
+
+new_feature_service = NewFeatureService()
+```
+
+3. **Create route handler** in `app/routes/`:
+```python
+# app/routes/new_feature.py
+from fastapi import APIRouter, Depends
+from app.core.security import get_current_user, TokenPayload
+from app.schemas.new_feature import NewFeatureRequest, NewFeatureResponse
+from app.services.new_feature_service import new_feature_service
+
+router = APIRouter()
+
+@router.post("/new-feature", response_model=NewFeatureResponse)
+async def new_feature_endpoint(
+    request: NewFeatureRequest,
+    current_user: TokenPayload = Depends(get_current_user),
+):
+    result = await new_feature_service.do_something(current_user.user_id, request)
+    return NewFeatureResponse(success=True, data=result)
+```
+
+4. **Register router** in `app/main.py`:
+```python
+from app.routes import new_feature
+
+app.include_router(new_feature.router, prefix=settings.API_V1_PREFIX, tags=["New Feature"])
+```
+
 ### Exception Handling
 
 **Use custom exceptions from `app/core/exceptions.py`:**
@@ -492,6 +582,20 @@ jwt_secret = settings.JWT_SECRET_KEY
 is_dev = settings.is_development
 cache_ttl = settings.CACHE_TTL_USER_PROFILE
 ```
+
+### Configuration Validation
+
+The configuration uses Pydantic BaseSettings with validators:
+
+```python
+# Automatic validation on startup
+# - CORS_ORIGINS parsed from JSON string
+# - LOG_LEVEL validated against valid levels
+# - ENVIRONMENT validated (development/staging/production)
+# - Required fields checked (DATABASE_URL, JWT_SECRET_KEY, etc.)
+```
+
+If configuration is invalid, the application will fail fast on startup with clear error messages.
 
 ## API Endpoints (28 total)
 
@@ -608,6 +712,32 @@ docker exec -it activity-postgres-db psql -U postgres -d activitydb -c "\df acti
 docker exec -i activity-postgres-db psql -U postgres -d activitydb < database/stored_procedures.sql
 ```
 
+### Rate Limiting Issues
+
+```bash
+# Check Redis rate limit database
+docker exec auth-redis redis-cli -n 1 KEYS "*"
+
+# Clear rate limits for testing
+docker exec auth-redis redis-cli -n 1 FLUSHDB
+
+# Check if rate limiting is enabled
+cat .env | grep RATE_LIMIT_ENABLED
+```
+
+### Cache Issues
+
+```bash
+# Check Redis cache database
+docker exec auth-redis redis-cli -n 0 KEYS "user_*"
+
+# Clear cache for testing
+docker exec auth-redis redis-cli -n 0 FLUSHDB
+
+# Verify cache is enabled
+cat .env | grep CACHE_ENABLED
+```
+
 ## Production Deployment
 
 See `PRODUCTION_DEPLOYMENT.md` for comprehensive checklist.
@@ -661,3 +791,4 @@ ENABLE_METRICS=true
 - `SECURITY_AUDIT.md` - Security audit report
 - `MIGRATION_TO_CENTRAL_DB.md` - Database migration documentation
 - `database/stored_procedures.sql` - All 23 stored procedures with documentation
+- `testing_ui/README.md` - Testing UI complete documentation

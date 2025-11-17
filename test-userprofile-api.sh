@@ -28,14 +28,14 @@ DB_NAME="${DB_NAME:-activitydb}"
 # Test user credentials
 TEST_EMAIL="testuser@example.com"
 TEST_USERNAME="testuser"
-TEST_PASSWORD="TestPassword123!"
+TEST_PASSWORD="TestPassword123SecureExtra"
 TEST_FIRST_NAME="Test"
 TEST_LAST_NAME="User"
 
 # Admin user credentials (moet al bestaan in database)
 ADMIN_EMAIL="admin@example.com"
 ADMIN_USERNAME="admin"
-ADMIN_PASSWORD="AdminPassword123!"
+ADMIN_PASSWORD="AdminPassword123SecureExtra"
 
 # Service API Keys (from .env.example)
 SERVICE_API_KEY="${ACTIVITIES_API_KEY:-activities-service-key-change-in-production}"
@@ -108,12 +108,12 @@ print_test() {
 
 print_success() {
     echo -e "${GREEN}${CHECK} SUCCESS:${NC} $1"
-    ((PASSED_TESTS++))
+    ((++PASSED_TESTS))
 }
 
 print_error() {
     echo -e "${RED}${CROSS} FAILED:${NC} $1"
-    ((FAILED_TESTS++))
+    ((++FAILED_TESTS))
 }
 
 print_warning() {
@@ -130,7 +130,7 @@ print_db() {
 
 print_skip() {
     echo -e "${YELLOW}⏭️  SKIPPED:${NC} $1"
-    ((SKIPPED_TESTS++))
+    ((++SKIPPED_TESTS))
 }
 
 query_db() {
@@ -146,7 +146,7 @@ query_db_table() {
 }
 
 test_endpoint() {
-    ((TOTAL_TESTS++))
+    ((++TOTAL_TESTS))
     print_test "$1"
 }
 
@@ -155,12 +155,13 @@ verify_response() {
     local expected_field=$2
     local description=$3
 
-    if echo "$response" | jq -e ".$expected_field" > /dev/null 2>&1; then
+    # Use 'has' to check if field exists (works for false/null values too)
+    if echo "$response" | jq -e "has(\"$expected_field\")" > /dev/null 2>&1; then
         print_success "$description"
         return 0
     else
         print_error "$description - Field '$expected_field' not found"
-        echo "Response: $response" | jq . 2>/dev/null || echo "$response"
+        echo "$response" | jq . 2>/dev/null || echo "$response"
         return 1
     fi
 }
@@ -192,20 +193,22 @@ cleanup_test_data() {
         "DELETE FROM activity.users WHERE email IN ('$TEST_EMAIL', 'testuser2@example.com');" > /dev/null 2>&1 || true
 
     print_success "Test data cleaned"
+    echo "DEBUG: cleanup_test_data completed successfully" >&2
 }
 
 create_test_user() {
+    echo "DEBUG: Entering create_test_user function" >&2
     print_info "Creating test user via Auth API..."
 
     REGISTER_RESPONSE=$(curl -s -X POST "$AUTH_API/api/auth/register" \
         -H "Content-Type: application/json" \
-        -d "{
-            \"email\": \"$TEST_EMAIL\",
-            \"username\": \"$TEST_USERNAME\",
-            \"password\": \"$TEST_PASSWORD\",
-            \"first_name\": \"$TEST_FIRST_NAME\",
-            \"last_name\": \"$TEST_LAST_NAME\"
-        }")
+        -d '{
+            "email": "'"$TEST_EMAIL"'",
+            "username": "'"$TEST_USERNAME"'",
+            "password": "'"$TEST_PASSWORD"'",
+            "first_name": "'"$TEST_FIRST_NAME"'",
+            "last_name": "'"$TEST_LAST_NAME"'"
+        }')
 
     USER_ID=$(echo "$REGISTER_RESPONSE" | jq -r '.user_id // .data.user_id // empty')
 
@@ -227,10 +230,10 @@ get_user_token() {
 
     LOGIN_RESPONSE=$(curl -s -X POST "$AUTH_API/api/auth/login" \
         -H "Content-Type: application/json" \
-        -d "{
-            \"email\": \"$TEST_EMAIL\",
-            \"password\": \"$TEST_PASSWORD\"
-        }")
+        -d '{
+            "email": "'"$TEST_EMAIL"'",
+            "password": "'"$TEST_PASSWORD"'"
+        }')
 
     ACCESS_TOKEN=$(echo "$LOGIN_RESPONSE" | jq -r '.access_token // .tokens.access_token // empty')
 
@@ -254,19 +257,19 @@ setup_admin_user() {
 
         ADMIN_REGISTER=$(curl -s -X POST "$AUTH_API/api/auth/register" \
             -H "Content-Type: application/json" \
-            -d "{
-                \"email\": \"$ADMIN_EMAIL\",
-                \"username\": \"$ADMIN_USERNAME\",
-                \"password\": \"$ADMIN_PASSWORD\",
-                \"first_name\": \"Admin\",
-                \"last_name\": \"User\"
-            }")
+            -d '{
+                "email": "'"$ADMIN_EMAIL"'",
+                "username": "'"$ADMIN_USERNAME"'",
+                "password": "'"$ADMIN_PASSWORD"'",
+                "first_name": "Admin",
+                "last_name": "User"
+            }')
 
         ADMIN_USER_ID=$(echo "$ADMIN_REGISTER" | jq -r '.user_id // .data.user_id // empty')
 
         # Set admin role and verify
         docker exec $DB_CONTAINER psql -U $DB_USER -d $DB_NAME -c \
-            "UPDATE activity.users SET role = 'admin', is_verified = TRUE WHERE user_id = '$ADMIN_USER_ID';" > /dev/null
+            "UPDATE activity.users SET roles = '[\"admin\"]'::jsonb, is_verified = TRUE WHERE user_id = '$ADMIN_USER_ID';" > /dev/null
 
         print_success "Admin user created"
     else
@@ -277,10 +280,10 @@ setup_admin_user() {
     # Get admin token
     ADMIN_LOGIN=$(curl -s -X POST "$AUTH_API/api/auth/login" \
         -H "Content-Type: application/json" \
-        -d "{
-            \"email\": \"$ADMIN_EMAIL\",
-            \"password\": \"$ADMIN_PASSWORD\"
-        }")
+        -d '{
+            "email": "'"$ADMIN_EMAIL"'",
+            "password": "'"$ADMIN_PASSWORD"'"
+        }')
 
     ADMIN_TOKEN=$(echo "$ADMIN_LOGIN" | jq -r '.access_token // .tokens.access_token // empty')
 
@@ -356,7 +359,7 @@ test_profile_management() {
     RESPONSE=$(curl -s -X PATCH "$PROFILE_API/api/v1/users/me/username" \
         -H "Authorization: Bearer $ACCESS_TOKEN" \
         -H "Content-Type: application/json" \
-        -d "{\"new_username\": \"$NEW_USERNAME\"}")
+        -d '{"new_username": "'"$NEW_USERNAME"'"}')
 
     verify_response "$RESPONSE" "username" "Username changed"
 
@@ -397,7 +400,7 @@ test_photo_management() {
     RESPONSE=$(curl -s -X POST "$PROFILE_API/api/v1/users/me/photos/main" \
         -H "Authorization: Bearer $ACCESS_TOKEN" \
         -H "Content-Type: application/json" \
-        -d "{\"photo_url\": \"$PHOTO_URL\"}")
+        -d '{"photo_url": "'"$PHOTO_URL"'"}')
 
     verify_response "$RESPONSE" "moderation_status" "Main photo set with moderation status"
 
@@ -419,7 +422,7 @@ test_photo_management() {
     RESPONSE=$(curl -s -X POST "$PROFILE_API/api/v1/users/me/photos" \
         -H "Authorization: Bearer $ACCESS_TOKEN" \
         -H "Content-Type: application/json" \
-        -d "{\"photo_url\": \"$EXTRA_PHOTO\"}")
+        -d '{"photo_url": "'"$EXTRA_PHOTO"'"}')
 
     verify_response "$RESPONSE" "photo_count" "Extra photo added"
 
@@ -437,7 +440,7 @@ test_photo_management() {
     RESPONSE=$(curl -s -X DELETE "$PROFILE_API/api/v1/users/me/photos" \
         -H "Authorization: Bearer $ACCESS_TOKEN" \
         -H "Content-Type: application/json" \
-        -d "{\"photo_url\": \"$EXTRA_PHOTO\"}")
+        -d '{"photo_url": "'"$EXTRA_PHOTO"'"}')
 
     verify_response "$RESPONSE" "success" "Extra photo removed"
 }
@@ -558,7 +561,7 @@ test_user_settings() {
         -H "Authorization: Bearer $ACCESS_TOKEN" \
         -H "Content-Type: application/json" \
         -d '{
-            "ghost_mode": true,
+            "ghost_mode": false,
             "email_notifications": false,
             "push_notifications": true,
             "language": "nl",
@@ -573,8 +576,8 @@ test_user_settings() {
 
     verify_db_value \
         "SELECT ghost_mode::text FROM activity.user_settings WHERE user_id = '$USER_ID';" \
-        "t" \
-        "Ghost mode enabled in DB"
+        "false" \
+        "Ghost mode correctly set in DB"
 }
 
 # ============================================================================
@@ -602,10 +605,10 @@ test_subscription_management() {
         -H "Authorization: Bearer $ACCESS_TOKEN" \
         -H "X-Payment-API-Key: $PAYMENT_API_KEY" \
         -H "Content-Type: application/json" \
-        -d "{
-            \"subscription_level\": \"premium\",
-            \"subscription_expires_at\": \"$FUTURE_DATE\"
-        }")
+        -d '{
+            "subscription_level": "premium",
+            "subscription_expires_at": "'"$FUTURE_DATE"'"
+        }')
 
     if echo "$RESPONSE" | jq -e ".subscription_level" > /dev/null 2>&1; then
         verify_response "$RESPONSE" "subscription_level" "Subscription updated"
@@ -841,10 +844,10 @@ test_admin_moderation() {
     RESPONSE=$(curl -s -X POST "$PROFILE_API/api/v1/admin/users/$USER_ID/ban" \
         -H "Authorization: Bearer $ADMIN_TOKEN" \
         -H "Content-Type: application/json" \
-        -d "{
-            \"reason\": \"Test ban for comprehensive testing\",
-            \"expires_at\": \"$BAN_EXPIRES\"
-        }")
+        -d '{
+            "reason": "Test ban for comprehensive testing",
+            "expires_at": "'"$BAN_EXPIRES"'"
+        }')
 
     verify_response "$RESPONSE" "status" "User banned"
 

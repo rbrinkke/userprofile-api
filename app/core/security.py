@@ -30,12 +30,12 @@ class TokenPayload:
 
     def __init__(self, payload: Dict):
         self.user_id: UUID = UUID(payload["sub"])
-        self.email: str = payload["email"]
+        self.email: Optional[str] = payload.get("email")
         self.org_id: Optional[UUID] = UUID(payload["org_id"]) if payload.get("org_id") else None
         self.subscription_level: str = payload.get("subscription_level", "free")
         self.ghost_mode: bool = payload.get("ghost_mode", False)
         self.exp: int = payload["exp"]
-        self.iat: int = payload["iat"]
+        self.iat: Optional[int] = payload.get("iat")
         self.token_type: str = payload.get("type", "access")
         self.role: Optional[str] = payload.get("role")
 
@@ -182,9 +182,10 @@ def require_premium(token_payload: TokenPayload = Depends(get_current_user)) -> 
     return token_payload
 
 
-def require_admin(token_payload: TokenPayload = Depends(get_current_user)) -> TokenPayload:
+async def require_admin(token_payload: TokenPayload = Depends(get_current_user)) -> TokenPayload:
     """
     Dependency to require admin role.
+    Checks database for admin role if not in JWT token.
 
     Args:
         token_payload: Current user token payload
@@ -195,20 +196,44 @@ def require_admin(token_payload: TokenPayload = Depends(get_current_user)) -> To
     Raises:
         AuthInsufficientPermissionsError: If user is not admin
     """
-    if not token_payload.is_admin:
-        logger.warning(
-            "admin_required",
-            user_id=str(token_payload.user_id),
-            role=token_payload.role,
-        )
-        raise AuthInsufficientPermissionsError(required_role="admin")
+    # First check JWT token (if auth-api includes role)
+    if token_payload.is_admin:
+        return token_payload
 
-    return token_payload
+    # Fallback: Check database for admin role
+    from app.core.database import db
+
+    result = await db.fetch_one(
+        "SELECT roles FROM activity.users WHERE user_id = $1",
+        token_payload.user_id
+    )
+
+    if result:
+        roles = result.get("roles", [])
+        # Handle JSONB array
+        if isinstance(roles, str):
+            import json
+            try:
+                roles = json.loads(roles)
+            except:
+                roles = []
+
+        if "admin" in roles:
+            token_payload.role = "admin"  # Update for subsequent checks
+            return token_payload
+
+    logger.warning(
+        "admin_required",
+        user_id=str(token_payload.user_id),
+        role=token_payload.role,
+    )
+    raise AuthInsufficientPermissionsError(required_role="admin")
 
 
-def require_moderator(token_payload: TokenPayload = Depends(get_current_user)) -> TokenPayload:
+async def require_moderator(token_payload: TokenPayload = Depends(get_current_user)) -> TokenPayload:
     """
     Dependency to require moderator or admin role.
+    Checks database for role if not in JWT token.
 
     Args:
         token_payload: Current user token payload
@@ -219,15 +244,39 @@ def require_moderator(token_payload: TokenPayload = Depends(get_current_user)) -
     Raises:
         AuthInsufficientPermissionsError: If user is not moderator/admin
     """
-    if not token_payload.is_moderator:
-        logger.warning(
-            "moderator_required",
-            user_id=str(token_payload.user_id),
-            role=token_payload.role,
-        )
-        raise AuthInsufficientPermissionsError(required_role="moderator")
+    # First check JWT token (if auth-api includes role)
+    if token_payload.is_moderator:
+        return token_payload
 
-    return token_payload
+    # Fallback: Check database for moderator/admin role
+    from app.core.database import db
+
+    result = await db.fetch_one(
+        "SELECT roles FROM activity.users WHERE user_id = $1",
+        token_payload.user_id
+    )
+
+    if result:
+        roles = result.get("roles", [])
+        # Handle JSONB array
+        if isinstance(roles, str):
+            import json
+            try:
+                roles = json.loads(roles)
+            except:
+                roles = []
+
+        for role in ["admin", "moderator"]:
+            if role in roles:
+                token_payload.role = role  # Update for subsequent checks
+                return token_payload
+
+    logger.warning(
+        "moderator_required",
+        user_id=str(token_payload.user_id),
+        role=token_payload.role,
+    )
+    raise AuthInsufficientPermissionsError(required_role="moderator")
 
 
 # ============================================================================

@@ -150,10 +150,10 @@ class CacheManager:
         key = f"user_settings:{user_id}"
         return await self.get(key)
 
-    async def set_user_settings(self, user_id: UUID, settings: dict) -> bool:
+    async def set_user_settings(self, user_id: UUID, user_settings: dict) -> bool:
         """Cache user settings with 30-minute TTL."""
         key = f"user_settings:{user_id}"
-        return await self.set(key, settings, ttl=settings.CACHE_TTL_USER_SETTINGS)
+        return await self.set(key, user_settings, ttl=settings.CACHE_TTL_USER_SETTINGS)
 
     async def invalidate_user_settings(self, user_id: UUID) -> int:
         """Invalidate user settings cache."""

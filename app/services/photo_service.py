@@ -1,4 +1,5 @@
 """Photo Service - Handles photo management operations."""
+import json
 from typing import List
 from uuid import UUID
 
@@ -8,6 +9,15 @@ from app.core.exceptions import ResourceNotFoundError, ResourceDuplicateError, R
 from app.core.logging_config import get_logger
 
 logger = get_logger(__name__)
+
+def _parse_photos_array(photos) -> List[str]:
+    """Parse JSONB photos array from string to list."""
+    if isinstance(photos, str):
+        try:
+            return json.loads(photos)
+        except (json.JSONDecodeError, TypeError):
+            return []
+    return photos if photos else []
 
 class PhotoService:
     """Service for photo management operations."""
@@ -48,7 +58,7 @@ class PhotoService:
 
         await cache.invalidate_user_profile(user_id)
         logger.info("profile_photo_added", user_id=str(user_id), count=result["photo_count"])
-        return result["success"], result["photo_count"], profile["profile_photos_extra"]
+        return result["success"], result["photo_count"], _parse_photos_array(profile["profile_photos_extra"])
 
     async def remove_profile_photo(self, user_id: UUID, photo_url: str) -> tuple[bool, int, List[str]]:
         """Remove photo from extra photos array."""
@@ -64,6 +74,6 @@ class PhotoService:
 
         await cache.invalidate_user_profile(user_id)
         logger.info("profile_photo_removed", user_id=str(user_id), count=result["photo_count"])
-        return result["success"], result["photo_count"], profile["profile_photos_extra"]
+        return result["success"], result["photo_count"], _parse_photos_array(profile["profile_photos_extra"])
 
 photo_service = PhotoService()

@@ -23,7 +23,7 @@ class SettingsService:
         )
 
         settings = UserSettingsResponse(**result)
-        await cache.set_user_settings(user_id, settings.dict())
+        await cache.set_user_settings(user_id, settings.model_dump())
         return settings
 
     async def update_settings(self, user_id: UUID, update_data: UpdateUserSettingsRequest) -> UserSettingsResponse:

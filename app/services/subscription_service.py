@@ -1,5 +1,5 @@
 """Subscription Service - Handles subscription management."""
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 from uuid import UUID
 from app.core.cache import cache
@@ -25,7 +25,7 @@ class SubscriptionService:
 
         days_remaining = None
         if result["subscription_expires_at"]:
-            delta = result["subscription_expires_at"] - datetime.utcnow()
+            delta = result["subscription_expires_at"] - datetime.now(timezone.utc)
             days_remaining = max(0, delta.days)
 
         return {

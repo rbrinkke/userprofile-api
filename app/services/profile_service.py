@@ -2,6 +2,7 @@
 Profile Service - Handles all profile management business logic.
 Interacts with database stored procedures and manages cache invalidation.
 """
+import json
 from datetime import datetime
 from typing import Optional
 from uuid import UUID
@@ -17,6 +18,22 @@ from app.schemas.profile import (
 )
 
 logger = get_logger(__name__)
+
+
+def _parse_json_fields(data: dict) -> dict:
+    """
+    Parse JSON string fields to actual Python objects.
+    PostgreSQL JSONB columns are returned as strings by asyncpg.
+    """
+    json_fields = ['profile_photos_extra', 'interests', 'settings']
+    for field in json_fields:
+        if field in data and isinstance(data[field], str):
+            try:
+                data[field] = json.loads(data[field])
+            except (json.JSONDecodeError, TypeError):
+                # If parsing fails, default to empty list/dict
+                data[field] = [] if field != 'settings' else {}
+    return data
 
 
 class ProfileService:
@@ -67,8 +84,9 @@ class ProfileService:
             )
             raise ResourceNotFoundError(resource="User")
 
-        # Convert to response model
-        profile = UserProfileResponse(**result)
+        # Parse JSON fields and convert to response model
+        parsed_result = _parse_json_fields(result)
+        profile = UserProfileResponse(**parsed_result)
 
         # Cache own profile
         if user_id == requesting_user_id:

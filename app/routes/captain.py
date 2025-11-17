@@ -17,11 +17,11 @@ async def grant_captain_status(
     """Grant Captain status (admin only)."""
     await subscription_service.set_captain_status(user_id, request.is_captain)
     data = await subscription_service.get_subscription(user_id)
-    return SetCaptainStatusResponse(user_id=str(user_id), is_captain=request.is_captain, **data)
+    return SetCaptainStatusResponse(user_id=str(user_id), **data)
 
 @router.delete("/users/{user_id}/captain", response_model=SetCaptainStatusResponse)
 async def revoke_captain_status(user_id: UUID, admin: TokenPayload = Depends(require_admin)):
     """Revoke Captain status (admin only)."""
     await subscription_service.set_captain_status(user_id, False)
     data = await subscription_service.get_subscription(user_id)
-    return SetCaptainStatusResponse(user_id=str(user_id), is_captain=False, **data)
+    return SetCaptainStatusResponse(user_id=str(user_id), **data)

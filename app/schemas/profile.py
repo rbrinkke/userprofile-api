@@ -12,15 +12,15 @@ from app.schemas.common import InterestTag, PhotoModerationStatus, SubscriptionL
 
 class UserSettingsResponse(BaseModel):
     """User settings embedded in profile response."""
-    email_notifications: bool
-    push_notifications: bool
-    activity_reminders: bool
-    community_updates: bool
-    friend_requests: bool
-    marketing_emails: bool
-    ghost_mode: bool
-    language: str
-    timezone: str
+    email_notifications: bool = True
+    push_notifications: bool = True
+    activity_reminders: bool = True
+    community_updates: bool = True
+    friend_requests: bool = True
+    marketing_emails: bool = False
+    ghost_mode: bool = False
+    language: str = "en"
+    timezone: str = "Europe/Amsterdam"
 
 
 class UserProfileResponse(BaseModel):
