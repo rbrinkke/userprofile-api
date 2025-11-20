@@ -2,8 +2,11 @@ import json
 from typing import List, Dict, Any
 from uuid import UUID
 
-from app.core.database import Database
+from fastapi import Depends
+
+from app.core.database import Database, get_db
 from app.schemas.common import InterestTag
+from app.schemas.interests import SetInterestsResponse, AddInterestResponse, RemoveInterestResponse
 
 class InterestRepository:
     def __init__(self, db: Database):
@@ -19,18 +22,25 @@ class InterestRepository:
         )
         return [InterestTag(**row) for row in rows]
 
-    async def set_interests(self, user_id: UUID, interests: List[InterestTag]) -> Dict[str, Any]:
+    async def set_interests(self, user_id: UUID, interests: List[InterestTag]) -> SetInterestsResponse:
         """
         Set all interests (replaces existing).
         """
-        interests_json = json.dumps([i.dict() for i in interests])
+        interests_data = [i.model_dump() for i in interests]
         result = await self.db.fetch_one(
-            "SELECT * FROM activity.sp_set_user_interests($1, $2::jsonb)",
-            user_id, interests_json
+            "SELECT * FROM activity.sp_set_user_interests($1, $2)",
+            user_id, interests_data
         )
-        return dict(result) if result else {"success": False, "interest_count": 0}
+        
+        if result:
+            return SetInterestsResponse(
+                success=result.get("success", False),
+                interest_count=result.get("interest_count", 0),
+                interests=interests if result.get("success") else []
+            )
+        return SetInterestsResponse(success=False, interest_count=0, interests=[])
 
-    async def add_interest(self, user_id: UUID, tag: str, weight: float) -> Dict[str, Any]:
+    async def add_interest(self, user_id: UUID, tag: str, weight: float) -> AddInterestResponse:
         """
         Add single interest.
         """
@@ -38,9 +48,15 @@ class InterestRepository:
             "SELECT * FROM activity.sp_add_user_interest($1, $2, $3)",
             user_id, tag, weight
         )
-        return dict(result) if result else {"success": False, "message": "Database error"}
+        
+        if result:
+             return AddInterestResponse(
+                 success=result.get("success", False),
+                 message=result.get("message", "Operation completed")
+             )
+        return AddInterestResponse(success=False, message="Database error")
 
-    async def remove_interest(self, user_id: UUID, tag: str) -> bool:
+    async def remove_interest(self, user_id: UUID, tag: str) -> RemoveInterestResponse:
         """
         Remove single interest.
         """
@@ -48,4 +64,13 @@ class InterestRepository:
             "SELECT * FROM activity.sp_remove_user_interest($1, $2)",
             user_id, tag
         )
-        return result is not None and result.get("success", False)
+        
+        if result:
+             return RemoveInterestResponse(
+                 success=result.get("success", False),
+                 message=result.get("message", "Operation completed")
+             )
+        return RemoveInterestResponse(success=False, message="Database error")
+
+def get_interest_repository(db: Database = Depends(get_db)) -> InterestRepository:
+    return InterestRepository(db)

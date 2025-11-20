@@ -6,10 +6,9 @@ from uuid import UUID
 from fastapi import Depends
 
 from app.core.cache import cache
-from app.core.database import Database, get_db
 from app.core.exceptions import ResourceNotFoundError
 from app.core.logging_config import get_logger
-from app.repositories.subscription_repository import SubscriptionRepository
+from app.repositories.subscription_repository import SubscriptionRepository, get_subscription_repository
 from app.schemas.common import SubscriptionLevel
 from app.schemas.subscription import SubscriptionResponse
 
@@ -63,7 +62,6 @@ class SubscriptionService:
         return True
 
 
-def get_subscription_service(db: Database = Depends(get_db)) -> SubscriptionService:
+def get_subscription_service(repo: SubscriptionRepository = Depends(get_subscription_repository)) -> SubscriptionService:
     """Dependency provider for SubscriptionService."""
-    repo = SubscriptionRepository(db)
     return SubscriptionService(repo)

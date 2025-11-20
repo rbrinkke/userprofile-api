@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 from app.schemas.common import PhotoModerationStatus, UserStatus
 
@@ -18,8 +18,7 @@ class PendingPhotoModeration(BaseModel):
     main_photo_url: Optional[str]  # Can be None if user hasn't uploaded photo yet
     created_at: datetime
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PendingPhotoModerationsResponse(BaseModel):
@@ -29,8 +28,8 @@ class PendingPhotoModerationsResponse(BaseModel):
     limit: int
     offset: int
 
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "results": [
                     {
@@ -46,25 +45,28 @@ class PendingPhotoModerationsResponse(BaseModel):
                 "offset": 0
             }
         }
+    )
 
 
 class ModeratePhotoRequest(BaseModel):
     """Request to approve or reject main photo."""
     status: PhotoModerationStatus
 
-    @validator("status")
+    @field_validator("status")
+    @classmethod
     def validate_status(cls, v):
         """Ensure status is approved or rejected."""
         if v not in [PhotoModerationStatus.APPROVED, PhotoModerationStatus.REJECTED]:
             raise ValueError("Status must be 'approved' or 'rejected'")
         return v
 
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "status": "approved"
             }
         }
+    )
 
 
 class ModeratePhotoResponse(BaseModel):
@@ -79,7 +81,8 @@ class BanUserRequest(BaseModel):
     reason: str = Field(..., max_length=1000, description="Reason for ban")
     expires_at: Optional[datetime] = Field(None, description="Ban expiry (NULL = permanent)")
 
-    @validator("expires_at")
+    @field_validator("expires_at")
+    @classmethod
     def validate_expiry(cls, v):
         """Ensure expiry is in future if provided."""
         if v:
@@ -93,13 +96,14 @@ class BanUserRequest(BaseModel):
                 raise ValueError("Ban expiry date must be in the future")
         return v
 
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "reason": "Repeated no-shows and harassment reports",
                 "expires_at": "2024-12-13T00:00:00Z"
             }
         }
+    )
 
 
 class BanUserResponse(BaseModel):

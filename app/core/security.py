@@ -29,7 +29,10 @@ class TokenPayload:
     """Structured representation of JWT token payload."""
 
     def __init__(self, payload: Dict):
-        self.user_id: UUID = UUID(payload["sub"])
+        try:
+            self.user_id: UUID = UUID(payload["sub"])
+        except (TypeError, ValueError, KeyError):
+            raise AuthTokenInvalidError({"reason": "Token missing subject"})
         self.email: Optional[str] = payload.get("email")
         self.org_id: Optional[UUID] = UUID(payload["org_id"]) if payload.get("org_id") else None
         self.subscription_level: str = payload.get("subscription_level", "free")

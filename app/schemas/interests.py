@@ -3,7 +3,7 @@ Pydantic schemas for interest tags endpoints.
 """
 from typing import List
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 from app.schemas.common import InterestTag, SuccessResponse
 
@@ -13,8 +13,8 @@ class GetInterestsResponse(BaseModel):
     interests: List[InterestTag] = Field(default_factory=list)
     count: int
 
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "interests": [
                     {"tag": "hiking", "weight": 1.0},
@@ -24,13 +24,15 @@ class GetInterestsResponse(BaseModel):
                 "count": 3
             }
         }
+    )
 
 
 class SetInterestsRequest(BaseModel):
     """Request to replace all interests (bulk update)."""
-    interests: List[InterestTag] = Field(..., max_items=20, description="List of interests (max 20)")
+    interests: List[InterestTag] = Field(..., max_length=20, description="List of interests (max 20)")
 
-    @validator("interests")
+    @field_validator("interests")
+    @classmethod
     def validate_unique_tags(cls, v):
         """Ensure tags are unique."""
         tags = [interest.tag.lower() for interest in v]
@@ -38,8 +40,8 @@ class SetInterestsRequest(BaseModel):
             raise ValueError("Interest tags must be unique")
         return v
 
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "interests": [
                     {"tag": "hiking", "weight": 1.0},
@@ -48,6 +50,7 @@ class SetInterestsRequest(BaseModel):
                 ]
             }
         }
+    )
 
 
 class SetInterestsResponse(BaseModel):
@@ -62,20 +65,22 @@ class AddInterestRequest(BaseModel):
     tag: str = Field(..., min_length=1, max_length=100, description="Interest tag name")
     weight: float = Field(default=1.0, ge=0.0, le=1.0, description="Interest weight (0.0-1.0)")
 
-    @validator("tag")
+    @field_validator("tag")
+    @classmethod
     def validate_tag(cls, v):
         """Ensure tag is not just whitespace."""
         if not v.strip():
             raise ValueError("Tag cannot be empty or whitespace")
         return v.strip()
 
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "tag": "running",
                 "weight": 0.9
             }
         }
+    )
 
 
 class AddInterestResponse(SuccessResponse):

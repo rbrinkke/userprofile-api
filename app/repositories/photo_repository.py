@@ -2,20 +2,13 @@ import json
 from typing import List, Dict, Any, Optional
 from uuid import UUID
 
-from app.core.database import Database
+from fastapi import Depends
+
+from app.core.database import Database, get_db
 
 class PhotoRepository:
     def __init__(self, db: Database):
         self.db = db
-
-    def _parse_photos_array(self, photos: Any) -> List[str]:
-        """Parse JSONB photos array from string to list."""
-        if isinstance(photos, str):
-            try:
-                return json.loads(photos)
-            except (json.JSONDecodeError, TypeError):
-                return []
-        return photos if photos else []
 
     async def set_main_photo(self, user_id: UUID, photo_url: str) -> Dict[str, Any]:
         """
@@ -56,5 +49,8 @@ class PhotoRepository:
             user_id
         )
         if result:
-            return self._parse_photos_array(result.get("profile_photos_extra"))
+            return result.get("profile_photos_extra") or []
         return []
+
+def get_photo_repository(db: Database = Depends(get_db)) -> PhotoRepository:
+    return PhotoRepository(db)

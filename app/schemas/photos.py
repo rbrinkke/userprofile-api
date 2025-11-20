@@ -2,29 +2,24 @@
 Pydantic schemas for photo management endpoints.
 """
 from typing import List
+from uuid import UUID
 
-from pydantic import BaseModel, Field, HttpUrl, validator
+from pydantic import BaseModel, Field, ConfigDict
 
 from app.schemas.common import PhotoModerationStatus
 
 
 class SetMainPhotoRequest(BaseModel):
     """Request to set main profile photo."""
-    photo_url: str = Field(..., max_length=500, description="Photo URL from image-api CDN")
+    image_id: UUID = Field(..., description="Image UUID from image-api")
 
-    @validator("photo_url")
-    def validate_url(cls, v):
-        """Validate URL is HTTPS."""
-        if not v.startswith("https://"):
-            raise ValueError("Photo URL must be HTTPS")
-        return v
-
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
-                "photo_url": "https://cdn.example.com/uploaded/photo123.jpg"
+                "image_id": "123e4567-e89b-12d3-a456-426614174000"
             }
         }
+    )
 
 
 class SetMainPhotoResponse(BaseModel):
@@ -37,21 +32,15 @@ class SetMainPhotoResponse(BaseModel):
 
 class AddProfilePhotoRequest(BaseModel):
     """Request to add photo to extra photos."""
-    photo_url: str = Field(..., max_length=500, description="Photo URL from image-api CDN")
+    image_id: UUID = Field(..., description="Image UUID from image-api")
 
-    @validator("photo_url")
-    def validate_url(cls, v):
-        """Validate URL is HTTPS."""
-        if not v.startswith("https://"):
-            raise ValueError("Photo URL must be HTTPS")
-        return v
-
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
-                "photo_url": "https://cdn.example.com/uploaded/photo456.jpg"
+                "image_id": "123e4567-e89b-12d3-a456-426614174001"
             }
         }
+    )
 
 
 class AddProfilePhotoResponse(BaseModel):
@@ -63,14 +52,15 @@ class AddProfilePhotoResponse(BaseModel):
 
 class RemoveProfilePhotoRequest(BaseModel):
     """Request to remove photo from extra photos."""
-    photo_url: str = Field(..., max_length=500, description="Photo URL to remove")
+    image_id: UUID = Field(..., description="Image UUID to remove")
 
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
-                "photo_url": "https://cdn.example.com/photos/1.jpg"
+                "image_id": "123e4567-e89b-12d3-a456-426614174002"
             }
         }
+    )
 
 
 class RemoveProfilePhotoResponse(BaseModel):

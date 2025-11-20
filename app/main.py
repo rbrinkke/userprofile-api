@@ -204,32 +204,11 @@ async def health_check():
 # Route Registration
 # ============================================================================
 
-# Import routers (will be created next)
-from app.routes import (
-    profile,
-    photos,
-    interests,
-    settings as settings_router,
-    subscription,
-    captain,
-    verification,
-    search,
-    heartbeat,
-    moderation,
-)
+# Import main API router
+from app.routes import api_router
 
-# Register routers with API version prefix
-# IMPORTANT: search.router MUST come before profile.router to avoid /search matching /{user_id}
-app.include_router(search.router, prefix=settings.API_V1_PREFIX, tags=["User Search"])
-app.include_router(profile.router, prefix=settings.API_V1_PREFIX, tags=["Profile Management"])
-app.include_router(photos.router, prefix=settings.API_V1_PREFIX, tags=["Photo Management"])
-app.include_router(interests.router, prefix=settings.API_V1_PREFIX, tags=["Interest Tags"])
-app.include_router(settings_router.router, prefix=settings.API_V1_PREFIX, tags=["User Settings"])
-app.include_router(subscription.router, prefix=settings.API_V1_PREFIX, tags=["Subscription Management"])
-app.include_router(captain.router, prefix=settings.API_V1_PREFIX, tags=["Captain Program"])
-app.include_router(verification.router, prefix=settings.API_V1_PREFIX, tags=["Trust & Verification"])
-app.include_router(heartbeat.router, prefix=settings.API_V1_PREFIX, tags=["Activity Tracking"])
-app.include_router(moderation.router, prefix=settings.API_V1_PREFIX, tags=["Admin Moderation"])
+# Register all routes
+app.include_router(api_router, prefix=settings.API_V1_PREFIX)
 
 # ============================================================================
 # Root Endpoint

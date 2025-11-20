@@ -3,8 +3,8 @@ Centralized application configuration using Pydantic BaseSettings.
 All environment variables are loaded and validated here.
 """
 from typing import List
-from pydantic import Field, validator
-from pydantic_settings import BaseSettings
+from pydantic import Field, field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -68,7 +68,8 @@ class Settings(BaseSettings):
     )
     CORS_ALLOW_CREDENTIALS: bool = Field(default=True, description="Allow credentials in CORS")
 
-    @validator("CORS_ORIGINS", pre=True)
+    @field_validator("CORS_ORIGINS", mode="before")
+    @classmethod
     def parse_cors_origins(cls, v):
         """Parse CORS origins from JSON string or list."""
         if isinstance(v, str):
@@ -87,7 +88,8 @@ class Settings(BaseSettings):
     CACHE_TTL_USER_SETTINGS: int = Field(default=1800, description="User settings cache TTL (30 minutes)")
     CACHE_TTL_USER_INTERESTS: int = Field(default=3600, description="User interests cache TTL (1 hour)")
 
-    @validator("LOG_LEVEL")
+    @field_validator("LOG_LEVEL")
+    @classmethod
     def validate_log_level(cls, v):
         """Validate log level."""
         valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
@@ -95,7 +97,8 @@ class Settings(BaseSettings):
             raise ValueError(f"LOG_LEVEL must be one of {valid_levels}")
         return v.upper()
 
-    @validator("LOG_FORMAT")
+    @field_validator("LOG_FORMAT")
+    @classmethod
     def validate_log_format(cls, v):
         """Validate log format."""
         valid_formats = ["json", "console"]
@@ -103,7 +106,8 @@ class Settings(BaseSettings):
             raise ValueError(f"LOG_FORMAT must be one of {valid_formats}")
         return v.lower()
 
-    @validator("ENVIRONMENT")
+    @field_validator("ENVIRONMENT")
+    @classmethod
     def validate_environment(cls, v):
         """Validate environment."""
         valid_envs = ["development", "staging", "production"]
@@ -121,10 +125,11 @@ class Settings(BaseSettings):
         """Check if running in development."""
         return self.ENVIRONMENT == "development"
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
-        extra = "ignore"
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        case_sensitive=True,
+        extra="ignore"
+    )
 
 
 # Global settings instance

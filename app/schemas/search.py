@@ -4,7 +4,7 @@ Pydantic schemas for user search endpoints.
 from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class UserSearchResult(BaseModel):
@@ -17,9 +17,9 @@ class UserSearchResult(BaseModel):
     is_verified: bool
     verification_count: int
 
-    class Config:
-        orm_mode = True
-        schema_extra = {
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
             "example": {
                 "user_id": "550e8400-e29b-41d4-a716-446655440000",
                 "username": "johndoe",
@@ -30,6 +30,7 @@ class UserSearchResult(BaseModel):
                 "verification_count": 12
             }
         }
+    )
 
 
 class UserSearchResponse(BaseModel):
@@ -39,8 +40,8 @@ class UserSearchResponse(BaseModel):
     limit: int
     offset: int
 
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "results": [
                     {
@@ -58,6 +59,7 @@ class UserSearchResponse(BaseModel):
                 "offset": 0
             }
         }
+    )
 
 
 class HeartbeatResponse(BaseModel):
@@ -65,10 +67,11 @@ class HeartbeatResponse(BaseModel):
     success: bool = True
     last_seen_at: str
 
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "success": True,
                 "last_seen_at": "2024-11-13T10:45:00Z"
             }
         }
+    )

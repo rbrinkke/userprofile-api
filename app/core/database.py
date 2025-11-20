@@ -2,9 +2,11 @@
 Database connection pool management using asyncpg.
 Provides connection lifecycle management and helper methods for query execution.
 """
-import asyncpg
+import json
 from typing import Optional, Any, List, Dict
 from contextlib import asynccontextmanager
+
+import asyncpg
 
 from app.config import settings
 from app.core.logging_config import get_logger
@@ -26,12 +28,19 @@ class Database:
         Create database connection pool.
         Called during application startup.
         """
+        async def init_connection(conn):
+            """Initialize connection with custom type codecs."""
+            await conn.set_type_codec(
+                'jsonb', encoder=json.dumps, decoder=json.loads, schema='pg_catalog'
+            )
+
         try:
             self.pool = await asyncpg.create_pool(
                 dsn=settings.DATABASE_URL,
                 min_size=settings.DATABASE_POOL_MIN_SIZE,
                 max_size=settings.DATABASE_POOL_MAX_SIZE,
                 command_timeout=60,
+                init=init_connection,
             )
             logger.info(
                 "database_connected",

@@ -6,10 +6,9 @@ from uuid import UUID
 from fastapi import Depends
 
 from app.core.cache import cache
-from app.core.database import Database, get_db
 from app.core.exceptions import ResourceNotFoundError
 from app.core.logging_config import get_logger
-from app.repositories.moderation_repository import ModerationRepository
+from app.repositories.moderation_repository import ModerationRepository, get_moderation_repository
 from app.schemas.common import PhotoModerationStatus
 from app.schemas.moderation import PendingPhotoModeration
 
@@ -51,7 +50,6 @@ class ModerationService:
         logger.info("user_unbanned", user_id=str(user_id))
         return result.get("success", False)
 
-def get_moderation_service(db: Database = Depends(get_db)) -> ModerationService:
+def get_moderation_service(repo: ModerationRepository = Depends(get_moderation_repository)) -> ModerationService:
     """Dependency provider for ModerationService."""
-    repo = ModerationRepository(db)
     return ModerationService(repo)

@@ -5,10 +5,9 @@ from uuid import UUID
 from fastapi import Depends
 
 from app.core.cache import cache
-from app.core.database import Database, get_db
 from app.core.exceptions import ResourceNotFoundError
 from app.core.logging_config import get_logger
-from app.repositories.verification_repository import VerificationRepository
+from app.repositories.verification_repository import VerificationRepository, get_verification_repository
 
 logger = get_logger(__name__)
 
@@ -79,7 +78,6 @@ class VerificationService:
         logger.info("activity_counters_updated", user_id=str(user_id))
         return result.get("new_created_count", 0), result.get("new_attended_count", 0)
 
-def get_verification_service(db: Database = Depends(get_db)) -> VerificationService:
+def get_verification_service(repo: VerificationRepository = Depends(get_verification_repository)) -> VerificationService:
     """Dependency provider for VerificationService."""
-    repo = VerificationRepository(db)
     return VerificationService(repo)

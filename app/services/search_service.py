@@ -4,10 +4,10 @@ from uuid import UUID
 
 from fastapi import Depends
 
-from app.core.database import Database, get_db
+from app.core.database import Database
 from app.core.exceptions import ResourceNotFoundError
 from app.core.logging_config import get_logger
-from app.repositories.search_repository import SearchRepository
+from app.repositories.search_repository import SearchRepository, get_search_repository
 from app.schemas.search import UserSearchResult
 
 logger = get_logger(__name__)
@@ -36,7 +36,6 @@ class SearchService:
         success = await self.search_repo.update_last_seen(user_id)
         return success
 
-def get_search_service(db: Database = Depends(get_db)) -> SearchService:
+def get_search_service(repo: SearchRepository = Depends(get_search_repository)) -> SearchService:
     """Dependency provider for SearchService."""
-    repo = SearchRepository(db)
     return SearchService(repo)

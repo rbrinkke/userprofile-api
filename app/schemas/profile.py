@@ -2,10 +2,9 @@
 Pydantic schemas for profile management endpoints.
 """
 from datetime import date, datetime
-from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field, validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, ConfigDict
 
 from app.schemas.common import InterestTag, PhotoModerationStatus, SubscriptionLevel
 
@@ -28,31 +27,31 @@ class UserProfileResponse(BaseModel):
     user_id: UUID
     email: EmailStr
     username: str
-    first_name: Optional[str]
-    last_name: Optional[str]
-    profile_description: Optional[str]
-    main_photo_url: Optional[str]
-    main_photo_moderation_status: Optional[PhotoModerationStatus]
-    profile_photos_extra: List[str] = Field(default_factory=list)
-    date_of_birth: Optional[date]
-    gender: Optional[str]
+    first_name: str | None
+    last_name: str | None
+    profile_description: str | None
+    main_photo_url: str | None
+    main_photo_moderation_status: PhotoModerationStatus | None
+    profile_photos_extra: list[str] = Field(default_factory=list)
+    date_of_birth: date | None
+    gender: str | None
     subscription_level: SubscriptionLevel
-    subscription_expires_at: Optional[datetime]
+    subscription_expires_at: datetime | None
     is_captain: bool
-    captain_since: Optional[datetime]
+    captain_since: datetime | None
     is_verified: bool
     verification_count: int
     no_show_count: int
     activities_created_count: int
     activities_attended_count: int
     created_at: datetime
-    last_seen_at: Optional[datetime]
-    interests: List[InterestTag] = Field(default_factory=list)
-    settings: Optional[UserSettingsResponse]
+    last_seen_at: datetime | None
+    interests: list[InterestTag] = Field(default_factory=list)
+    settings: UserSettingsResponse | None
 
-    class Config:
-        orm_mode = True
-        schema_extra = {
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
             "example": {
                 "user_id": "550e8400-e29b-41d4-a716-446655440000",
                 "email": "user@example.com",
@@ -93,39 +92,40 @@ class UserProfileResponse(BaseModel):
                 }
             }
         }
+    )
 
 
 class PublicUserProfileResponse(BaseModel):
     """Public user profile (excludes sensitive information)."""
     user_id: UUID
     username: str
-    first_name: Optional[str]
-    last_name: Optional[str]
-    profile_description: Optional[str]
-    main_photo_url: Optional[str]
-    main_photo_moderation_status: Optional[PhotoModerationStatus]
-    profile_photos_extra: List[str] = Field(default_factory=list)
-    gender: Optional[str]
+    first_name: str | None
+    last_name: str | None
+    profile_description: str | None
+    main_photo_url: str | None
+    main_photo_moderation_status: PhotoModerationStatus | None
+    profile_photos_extra: list[str] = Field(default_factory=list)
+    gender: str | None
     is_verified: bool
     verification_count: int
     activities_created_count: int
     activities_attended_count: int
     created_at: datetime
-    interests: List[InterestTag] = Field(default_factory=list)
+    interests: list[InterestTag] = Field(default_factory=list)
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UpdateProfileRequest(BaseModel):
     """Request to update user profile fields."""
-    first_name: Optional[str] = Field(None, max_length=100)
-    last_name: Optional[str] = Field(None, max_length=100)
-    profile_description: Optional[str] = Field(None, max_length=5000)
-    date_of_birth: Optional[date] = None
-    gender: Optional[str] = Field(None, max_length=50)
+    first_name: str | None = Field(None, max_length=100)
+    last_name: str | None = Field(None, max_length=100)
+    profile_description: str | None = Field(None, max_length=5000)
+    date_of_birth: date | None = None
+    gender: str | None = Field(None, max_length=50)
 
-    @validator("date_of_birth")
+    @field_validator("date_of_birth")
+    @classmethod
     def validate_age(cls, v):
         """Validate user is at least 18 years old."""
         if v:
@@ -138,8 +138,8 @@ class UpdateProfileRequest(BaseModel):
                 raise ValueError("Date of birth cannot be in the future")
         return v
 
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "first_name": "John",
                 "last_name": "Doe",
@@ -148,6 +148,7 @@ class UpdateProfileRequest(BaseModel):
                 "gender": "male"
             }
         }
+    )
 
 
 class UpdateProfileResponse(BaseModel):
@@ -160,18 +161,20 @@ class UpdateUsernameRequest(BaseModel):
     """Request to change username."""
     new_username: str = Field(..., min_length=3, max_length=30, pattern=r"^[a-zA-Z0-9_]{3,30}$")
 
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "new_username": "newusername123"
             }
         }
+    )
 
 
 class UpdateUsernameResponse(BaseModel):
     """Response after changing username."""
     success: bool = True
     username: str
+    message: str | None = None
 
 
 class DeleteAccountRequest(BaseModel):
@@ -179,20 +182,22 @@ class DeleteAccountRequest(BaseModel):
     password: str = Field(..., description="Current password for verification")
     confirmation: str = Field(..., description="Must be exactly 'DELETE MY ACCOUNT'")
 
-    @validator("confirmation")
+    @field_validator("confirmation")
+    @classmethod
     def validate_confirmation(cls, v):
         """Ensure confirmation text matches exactly."""
         if v != "DELETE MY ACCOUNT":
             raise ValueError("Confirmation must be exactly 'DELETE MY ACCOUNT'")
         return v
 
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "password": "current_password",
                 "confirmation": "DELETE MY ACCOUNT"
             }
         }
+    )
 
 
 class DeleteAccountResponse(BaseModel):

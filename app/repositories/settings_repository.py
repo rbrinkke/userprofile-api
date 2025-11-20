@@ -1,7 +1,9 @@
 from typing import Optional
 from uuid import UUID
 
-from app.core.database import Database
+from fastapi import Depends
+
+from app.core.database import Database, get_db
 from app.schemas.settings import UserSettingsResponse, UpdateUserSettingsRequest
 
 
@@ -43,3 +45,6 @@ class SettingsRepository:
             update_data.timezone,
         )
         return bool(result and result.get("success"))
+
+def get_settings_repository(db: Database = Depends(get_db)) -> SettingsRepository:
+    return SettingsRepository(db)

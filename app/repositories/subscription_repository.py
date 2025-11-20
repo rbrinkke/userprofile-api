@@ -2,7 +2,9 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
-from app.core.database import Database
+from fastapi import Depends
+
+from app.core.database import Database, get_db
 from app.schemas.common import SubscriptionLevel
 from app.schemas.subscription import SubscriptionResponse
 
@@ -42,3 +44,6 @@ class SubscriptionRepository:
             user_id, is_captain
         )
         return bool(result and result.get("success"))
+
+def get_subscription_repository(db: Database = Depends(get_db)) -> SubscriptionRepository:
+    return SubscriptionRepository(db)

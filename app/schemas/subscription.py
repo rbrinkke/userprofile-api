@@ -1,10 +1,10 @@
 """
 Pydantic schemas for subscription management endpoints.
 """
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, ConfigDict, model_validator
 
 from app.schemas.common import SubscriptionLevel
 
@@ -17,18 +17,8 @@ class SubscriptionResponse(BaseModel):
     captain_since: Optional[datetime] = None
     days_remaining: Optional[int] = None
 
-    @validator("days_remaining", always=True)
-    def calculate_days_remaining(cls, v, values):
-        """Calculate days remaining until subscription expires."""
-        if values.get("subscription_expires_at"):
-            expires_at = values["subscription_expires_at"]
-            now = datetime.utcnow()
-            if expires_at > now:
-                return (expires_at - now).days
-        return None
-
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "subscription_level": "premium",
                 "subscription_expires_at": "2025-12-31T23:59:59Z",
@@ -36,6 +26,15 @@ class SubscriptionResponse(BaseModel):
                 "days_remaining": 412
             }
         }
+    )
+
+    @model_validator(mode='after')
+    def compute_days_remaining(self):
+        if self.subscription_expires_at:
+            now = datetime.now(timezone.utc)  # Use timezone-aware datetime
+            if self.subscription_expires_at > now:
+                 self.days_remaining = (self.subscription_expires_at - now).days
+        return self
 
 
 class UpdateSubscriptionRequest(BaseModel):
@@ -43,10 +42,19 @@ class UpdateSubscriptionRequest(BaseModel):
     subscription_level: SubscriptionLevel
     subscription_expires_at: Optional[datetime] = None
 
-    @validator("subscription_expires_at", always=True)
-    def validate_expiry(cls, v, values):
-        """Validate expiry based on subscription level."""
-        level = values.get("subscription_level")
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "subscription_level": "premium",
+                "subscription_expires_at": "2025-12-31T23:59:59Z"
+            }
+        }
+    )
+
+    @model_validator(mode='after')
+    def validate_expiry(self):
+        level = self.subscription_level
+        v = self.subscription_expires_at
 
         if level == SubscriptionLevel.FREE and v is not None:
             raise ValueError("Free subscription cannot have expiry date")
@@ -54,18 +62,10 @@ class UpdateSubscriptionRequest(BaseModel):
         if level in [SubscriptionLevel.CLUB, SubscriptionLevel.PREMIUM] and v is None:
             raise ValueError("Club and Premium subscriptions must have expiry date")
 
-        if v and v <= datetime.utcnow():
+        if v and v <= datetime.now(timezone.utc):
             raise ValueError("Expiry date must be in the future")
 
-        return v
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "subscription_level": "premium",
-                "subscription_expires_at": "2025-12-31T23:59:59Z"
-            }
-        }
+        return self
 
 
 class UpdateSubscriptionResponse(BaseModel):
@@ -79,12 +79,13 @@ class SetCaptainStatusRequest(BaseModel):
     """Request to grant/revoke captain status."""
     is_captain: bool
 
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "is_captain": True
             }
         }
+    )
 
 
 class SetCaptainStatusResponse(BaseModel):

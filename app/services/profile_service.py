@@ -11,7 +11,7 @@ from app.core.cache import cache
 from app.core.database import Database, get_db
 from app.core.exceptions import ResourceNotFoundError, ResourceDuplicateError
 from app.core.logging_config import get_logger
-from app.repositories.profile_repository import ProfileRepository
+from app.repositories.profile_repository import ProfileRepository, get_profile_repository
 from app.schemas.profile import (
     PublicUserProfileResponse,
     UpdateProfileRequest,
@@ -59,7 +59,7 @@ class ProfileService:
 
         # Cache own profile
         if user_id == requesting_user_id:
-            await cache.set_user_profile(user_id, profile.dict())
+            await cache.set_user_profile(user_id, profile.model_dump())
 
         logger.info("profile_retrieved", user_id=str(user_id), requesting_user_id=str(requesting_user_id))
         return profile
@@ -113,9 +113,9 @@ class ProfileService:
         """
         Update user profile fields.
         """
-        updated_at = await self.profile_repo.update(user_id, update_data)
+        response = await self.profile_repo.update(user_id, update_data)
 
-        if not updated_at:
+        if not response:
             logger.warning("profile_update_failed", user_id=str(user_id))
             raise ResourceNotFoundError(resource="User")
 
@@ -123,7 +123,7 @@ class ProfileService:
         await cache.invalidate_user_profile(user_id)
 
         logger.info("profile_updated", user_id=str(user_id))
-        return updated_at
+        return response.updated_at
 
     async def update_username(
         self,
@@ -135,8 +135,8 @@ class ProfileService:
         """
         result = await self.profile_repo.update_username(user_id, new_username)
 
-        if not result.get("success"):
-            if "already taken" in result.get("message", ""):
+        if not result.success:
+            if result.message and "already taken" in result.message:
                 logger.warning("username_taken", username=new_username)
                 raise ResourceDuplicateError(field="username", value=new_username)
             else:
@@ -156,9 +156,9 @@ class ProfileService:
         """
         Soft delete user account (GDPR compliance).
         """
-        success = await self.profile_repo.delete(user_id)
+        response = await self.profile_repo.delete(user_id)
 
-        if not success:
+        if not response.success:
             logger.warning("account_deletion_failed", user_id=str(user_id))
             raise ResourceNotFoundError(resource="User")
 
@@ -169,9 +169,8 @@ class ProfileService:
         return True
 
 
-def get_profile_service(db: Database = Depends(get_db)) -> ProfileService:
+def get_profile_service(repo: ProfileRepository = Depends(get_profile_repository)) -> ProfileService:
     """
     Dependency provider for ProfileService.
     """
-    repo = ProfileRepository(db)
     return ProfileService(repo)

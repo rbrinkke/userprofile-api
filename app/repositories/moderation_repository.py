@@ -2,7 +2,9 @@ from datetime import datetime
 from typing import List, Optional, Dict, Any
 from uuid import UUID
 
-from app.core.database import Database
+from fastapi import Depends
+
+from app.core.database import Database, get_db
 from app.schemas.common import PhotoModerationStatus
 from app.schemas.moderation import PendingPhotoModeration
 
@@ -49,3 +51,6 @@ class ModerationRepository:
             user_id
         )
         return dict(result) if result else {}
+
+def get_moderation_repository(db: Database = Depends(get_db)) -> ModerationRepository:
+    return ModerationRepository(db)

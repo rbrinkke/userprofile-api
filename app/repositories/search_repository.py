@@ -1,7 +1,9 @@
 from typing import List, Tuple
 from uuid import UUID
 
-from app.core.database import Database
+from fastapi import Depends
+
+from app.core.database import Database, get_db
 from app.schemas.search import UserSearchResult
 
 class SearchRepository:
@@ -33,3 +35,6 @@ class SearchRepository:
             user_id
         )
         return result.get("success", False) if result else False
+
+def get_search_repository(db: Database = Depends(get_db)) -> SearchRepository:
+    return SearchRepository(db)

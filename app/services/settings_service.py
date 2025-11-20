@@ -5,10 +5,9 @@ from uuid import UUID
 from fastapi import Depends
 
 from app.core.cache import cache
-from app.core.database import Database, get_db
 from app.core.exceptions import ResourceNotFoundError
 from app.core.logging_config import get_logger
-from app.repositories.settings_repository import SettingsRepository
+from app.repositories.settings_repository import SettingsRepository, get_settings_repository
 from app.schemas.settings import UpdateUserSettingsRequest, UserSettingsResponse
 
 logger = get_logger(__name__)
@@ -50,7 +49,6 @@ class SettingsService:
         return await self.get_settings(user_id)
 
 
-def get_settings_service(db: Database = Depends(get_db)) -> SettingsService:
+def get_settings_service(repo: SettingsRepository = Depends(get_settings_repository)) -> SettingsService:
     """Dependency provider for SettingsService."""
-    repo = SettingsRepository(db)
     return SettingsService(repo)

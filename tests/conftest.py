@@ -1,9 +1,10 @@
 import pytest
+import pytest_asyncio
 from typing import AsyncGenerator
 from unittest.mock import AsyncMock, MagicMock
 
 from fastapi import FastAPI
-from httpx import AsyncClient
+from httpx import AsyncClient, ASGITransport
 
 from app.main import app
 from app.core.database import Database, get_db
@@ -40,22 +41,26 @@ def app_fixture(mock_db) -> FastAPI:
     return app
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def client(app_fixture) -> AsyncGenerator[AsyncClient, None]:
-    async with AsyncClient(app=app_fixture, base_url="http://test") as ac:
+    transport = ASGITransport(app=app_fixture)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
     app.dependency_overrides.clear()
 
 
 @pytest.fixture
 def mock_current_user():
-    return TokenPayload(
-        user_id="550e8400-e29b-41d4-a716-446655440000",
-        email="test@example.com",
-        username="testuser",
-        role="user",
-        ghost_mode=False
-    )
+    return TokenPayload({
+        "sub": "550e8400-e29b-41d4-a716-446655440000",
+        "email": "test@example.com",
+        "org_id": None,
+        "subscription_level": "free",
+        "ghost_mode": False,
+        "exp": 1735689600,
+        "type": "access",
+        "role": "user"
+    })
 
 
 @pytest.fixture

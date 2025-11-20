@@ -1,7 +1,9 @@
 from typing import Dict, Any, Optional
 from uuid import UUID
 
-from app.core.database import Database
+from fastapi import Depends
+
+from app.core.database import Database, get_db
 
 class VerificationRepository:
     def __init__(self, db: Database):
@@ -46,3 +48,6 @@ class VerificationRepository:
             user_id, created_delta, attended_delta
         )
         return dict(result) if result else {}
+
+def get_verification_repository(db: Database = Depends(get_db)) -> VerificationRepository:
+    return VerificationRepository(db)

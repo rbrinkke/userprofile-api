@@ -1,9 +1,7 @@
 """
 Pydantic schemas for user settings endpoints.
 """
-from typing import Optional
-
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 
 class UserSettingsResponse(BaseModel):
@@ -18,9 +16,9 @@ class UserSettingsResponse(BaseModel):
     language: str
     timezone: str
 
-    class Config:
-        orm_mode = True
-        schema_extra = {
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
             "example": {
                 "email_notifications": True,
                 "push_notifications": True,
@@ -33,29 +31,31 @@ class UserSettingsResponse(BaseModel):
                 "timezone": "Europe/Amsterdam"
             }
         }
+    )
 
 
 class UpdateUserSettingsRequest(BaseModel):
     """Request to update user settings (partial update)."""
-    email_notifications: Optional[bool] = None
-    push_notifications: Optional[bool] = None
-    activity_reminders: Optional[bool] = None
-    community_updates: Optional[bool] = None
-    friend_requests: Optional[bool] = None
-    marketing_emails: Optional[bool] = None
-    ghost_mode: Optional[bool] = None
-    language: Optional[str] = Field(None, min_length=2, max_length=10, description="ISO 639-1 language code")
-    timezone: Optional[str] = Field(None, max_length=50, description="IANA timezone string")
+    email_notifications: bool | None = None
+    push_notifications: bool | None = None
+    activity_reminders: bool | None = None
+    community_updates: bool | None = None
+    friend_requests: bool | None = None
+    marketing_emails: bool | None = None
+    ghost_mode: bool | None = None
+    language: str | None = Field(None, min_length=2, max_length=10, description="ISO 639-1 language code")
+    timezone: str | None = Field(None, max_length=50, description="IANA timezone string")
 
-    @validator("language")
+    @field_validator("language")
+    @classmethod
     def validate_language(cls, v):
         """Validate language code format."""
         if v and len(v) not in [2, 5]:  # en or en-US
             raise ValueError("Language must be 2 or 5 character ISO 639-1 code")
         return v
 
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "email_notifications": False,
                 "push_notifications": True,
@@ -64,6 +64,7 @@ class UpdateUserSettingsRequest(BaseModel):
                 "timezone": "Europe/Berlin"
             }
         }
+    )
 
 
 class UpdateUserSettingsResponse(BaseModel):
