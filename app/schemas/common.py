@@ -62,3 +62,18 @@ class ErrorResponse(BaseModel):
             }
         }
     })
+
+
+class HeartbeatResponse(BaseModel):
+    """Response after updating last seen timestamp."""
+    success: bool = True
+    last_seen_at: str
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "success": True,
+                "last_seen_at": "2024-11-13T10:45:00Z"
+            }
+        }
+    )

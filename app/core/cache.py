@@ -2,7 +2,7 @@
 Redis cache manager for user profiles, settings, and interests.
 Implements caching strategy with TTL configuration and cache invalidation logic.
 """
-import json
+import orjson
 from typing import Any, Optional
 from uuid import UUID
 
@@ -62,7 +62,7 @@ class CacheManager:
             value = await self.redis_client.get(key)
             if value:
                 logger.debug("cache_hit", key=key)
-                return json.loads(value)
+                return orjson.loads(value)
             logger.debug("cache_miss", key=key)
             return None
         except Exception as e:
@@ -86,7 +86,7 @@ class CacheManager:
 
         try:
             ttl = ttl or settings.CACHE_DEFAULT_TTL
-            serialized = json.dumps(value, default=str)  # default=str handles UUID, datetime
+            serialized = orjson.dumps(value, default=str).decode('utf-8')
             await self.redis_client.setex(key, ttl, serialized)
             logger.debug("cache_set", key=key, ttl=ttl)
             return True

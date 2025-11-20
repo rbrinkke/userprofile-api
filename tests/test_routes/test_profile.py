@@ -30,7 +30,17 @@ async def test_get_my_profile(authenticated_client, mock_db):
         "created_at": datetime(2023, 1, 1, 0, 0, 0),
         "last_seen_at": None,
         "interests": [], # List
-        "settings": {}   # Dict
+        "settings": {
+            "email_notifications": True,
+            "push_notifications": True,
+            "activity_reminders": True,
+            "community_updates": True,
+            "friend_requests": True,
+            "marketing_emails": False,
+            "ghost_mode": False,
+            "language": "en",
+            "timezone": "Europe/Amsterdam"
+        }   # Dict
     }
     
     # Mock the DB call

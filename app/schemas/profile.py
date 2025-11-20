@@ -7,19 +7,7 @@ from uuid import UUID
 from pydantic import BaseModel, EmailStr, Field, field_validator, ConfigDict
 
 from app.schemas.common import InterestTag, PhotoModerationStatus, SubscriptionLevel
-
-
-class UserSettingsResponse(BaseModel):
-    """User settings embedded in profile response."""
-    email_notifications: bool = True
-    push_notifications: bool = True
-    activity_reminders: bool = True
-    community_updates: bool = True
-    friend_requests: bool = True
-    marketing_emails: bool = False
-    ghost_mode: bool = False
-    language: str = "en"
-    timezone: str = "Europe/Amsterdam"
+from app.schemas.settings import UserSettingsResponse
 
 
 class UserProfileResponse(BaseModel):

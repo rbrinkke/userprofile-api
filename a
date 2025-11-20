@@ -1,0 +1,41 @@
+1. JSON Parsing (Grootste Winst)
+Je gebruikt momenteel de standaard Python json module in app/core/cache.py en app/core/database.py. De standaard json library is in Python vrij traag. Oplossing: Vervang dit door orjson. Dit is een library geschreven in Rust die 10x tot 20x sneller is met serialization/deserialization.
+
+Waar aanpassen: In app/core/cache.py:
+
+Python
+
+import orjson  # In plaats van import json
+
+# ... in set method ...
+# orjson.dumps geeft bytes terug, dus geen .encode nodig, maar redis verwacht soms str/bytes
+serialized = orjson.dumps(value).decode('utf-8') 
+
+# ... in get method ...
+return orjson.loads(value)
+In app/core/database.py: Gebruik orjson.dumps en orjson.loads voor de jsonb codec.
+
+2. Pydantic Validatie in Loops (CPU Heavy)
+In app/repositories/search_repository.py (en andere repo's) doe je dit:
+
+Python
+
+# Huidige situatie
+results = await self.db.fetch_all(...)
+return [UserSearchResult(**row) for row in results]
+fetch_all in database.py converteert eerst de super-snelle AsyncPG records naar een Python dict ([dict(row) for row in rows]), en daarna converteert Pydantic die dict weer naar een Model. Dit is dubbel werk en traag bij grote lijsten (zoals search results).
+
+Oplossing: Gebruik de TypeAdapter van Pydantic v2 voor lijst-validatie in één keer, of sla de validatie over als je zeker bent van je Stored Procedures.
+
+Python
+
+# Snellere optie in repository
+from pydantic import TypeAdapter
+
+# Definieer dit eenmalig bovenaan
+search_adapter = TypeAdapter(List[UserSearchResult])
+
+# In de functie:
+# Laat database.py de raw records teruggeven (zie punt 3)
+rows = await self.db.fetch_all_raw(...) 
+return search_adapter.validate_python(rows)

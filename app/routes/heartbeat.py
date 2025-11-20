@@ -3,7 +3,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends
 
 from app.core.security import get_current_user, TokenPayload
-from app.schemas.search import HeartbeatResponse
+from app.schemas.common import HeartbeatResponse
 from app.services.search_service import SearchService, get_search_service
 
 router = APIRouter()

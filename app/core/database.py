@@ -2,7 +2,7 @@
 Database connection pool management using asyncpg.
 Provides connection lifecycle management and helper methods for query execution.
 """
-import json
+import orjson
 from typing import Optional, Any, List, Dict
 from contextlib import asynccontextmanager
 
@@ -31,7 +31,7 @@ class Database:
         async def init_connection(conn):
             """Initialize connection with custom type codecs."""
             await conn.set_type_codec(
-                'jsonb', encoder=json.dumps, decoder=json.loads, schema='pg_catalog'
+                'jsonb', encoder=orjson.dumps, decoder=orjson.loads, schema='pg_catalog'
             )
 
         try:
@@ -90,6 +90,21 @@ class Database:
             rows = await connection.fetch(query, *args)
             return [dict(row) for row in rows]
 
+    async def fetch_all_raw(self, query: str, *args) -> List[asyncpg.Record]:
+        """
+        Execute query and return all rows as list of raw asyncpg.Record objects.
+
+        Args:
+            query: SQL query
+            *args: Query parameters
+
+        Returns:
+            List of asyncpg.Record objects
+        """
+        async with self.pool.acquire() as connection:
+            rows = await connection.fetch(query, *args)
+            return rows
+
     async def execute(self, query: str, *args) -> str:
         """
         Execute query without returning results (INSERT/UPDATE/DELETE).
@@ -117,20 +132,6 @@ class Database:
         """
         async with self.pool.acquire() as connection:
             return await connection.fetchval(query, *args)
-
-    @asynccontextmanager
-    async def transaction(self):
-        """
-        Context manager for database transactions.
-
-        Usage:
-            async with db.transaction():
-                await db.execute("INSERT ...")
-                await db.execute("UPDATE ...")
-        """
-        async with self.pool.acquire() as connection:
-            async with connection.transaction():
-                yield connection
 
     async def health_check(self) -> bool:
         """
