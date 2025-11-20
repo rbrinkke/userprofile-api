@@ -1,79 +1,65 @@
 """Photo Service - Handles photo management operations."""
-import json
-from typing import List
+from typing import List, Tuple
 from uuid import UUID
 
+from fastapi import Depends
+
 from app.core.cache import cache
-from app.core.database import db
+from app.core.database import Database, get_db
 from app.core.exceptions import ResourceNotFoundError, ResourceDuplicateError, ResourceLimitExceededError
 from app.core.logging_config import get_logger
+from app.repositories.photo_repository import PhotoRepository
 
 logger = get_logger(__name__)
 
-def _parse_photos_array(photos) -> List[str]:
-    """Parse JSONB photos array from string to list."""
-    if isinstance(photos, str):
-        try:
-            return json.loads(photos)
-        except (json.JSONDecodeError, TypeError):
-            return []
-    return photos if photos else []
-
 class PhotoService:
     """Service for photo management operations."""
+    
+    def __init__(self, photo_repo: PhotoRepository):
+        self.photo_repo = photo_repo
 
-    async def set_main_photo(self, user_id: UUID, photo_url: str) -> tuple[bool, str]:
+    async def set_main_photo(self, user_id: UUID, photo_url: str) -> Tuple[bool, str]:
         """Set main profile photo (triggers moderation)."""
-        result = await db.fetch_one(
-            "SELECT * FROM activity.sp_set_main_photo($1, $2)",
-            user_id, photo_url
-        )
+        result = await self.photo_repo.set_main_photo(user_id, photo_url)
 
-        if not result or not result["success"]:
+        if not result.get("success"):
             raise ResourceNotFoundError(resource="User")
 
         await cache.invalidate_user_profile(user_id)
         logger.info("main_photo_set", user_id=str(user_id))
-        return result["success"], result["moderation_status"]
+        return result.get("success"), result.get("moderation_status")
 
-    async def add_profile_photo(self, user_id: UUID, photo_url: str) -> tuple[bool, int, List[str]]:
+    async def add_profile_photo(self, user_id: UUID, photo_url: str) -> Tuple[bool, int, List[str]]:
         """Add photo to extra photos array."""
-        result = await db.fetch_one(
-            "SELECT * FROM activity.sp_add_profile_photo($1, $2)",
-            user_id, photo_url
-        )
+        result = await self.photo_repo.add_profile_photo(user_id, photo_url)
 
-        if not result["success"]:
-            if "Maximum" in result["message"]:
+        if not result.get("success"):
+            message = result.get("message", "")
+            if "Maximum" in message:
                 raise ResourceLimitExceededError(resource="photos", limit=8)
-            elif "already added" in result["message"]:
+            elif "already added" in message:
                 raise ResourceDuplicateError(field="photo", value=photo_url)
             raise ResourceNotFoundError(resource="User")
 
         # Get updated photos
-        profile = await db.fetch_one(
-            "SELECT profile_photos_extra FROM activity.users WHERE user_id = $1",
-            user_id
-        )
+        photos = await self.photo_repo.get_extra_photos(user_id)
 
         await cache.invalidate_user_profile(user_id)
-        logger.info("profile_photo_added", user_id=str(user_id), count=result["photo_count"])
-        return result["success"], result["photo_count"], _parse_photos_array(profile["profile_photos_extra"])
+        logger.info("profile_photo_added", user_id=str(user_id), count=result.get("photo_count"))
+        return result.get("success"), result.get("photo_count"), photos
 
-    async def remove_profile_photo(self, user_id: UUID, photo_url: str) -> tuple[bool, int, List[str]]:
+    async def remove_profile_photo(self, user_id: UUID, photo_url: str) -> Tuple[bool, int, List[str]]:
         """Remove photo from extra photos array."""
-        result = await db.fetch_one(
-            "SELECT * FROM activity.sp_remove_profile_photo($1, $2)",
-            user_id, photo_url
-        )
+        result = await self.photo_repo.remove_profile_photo(user_id, photo_url)
 
-        profile = await db.fetch_one(
-            "SELECT profile_photos_extra FROM activity.users WHERE user_id = $1",
-            user_id
-        )
+        # Get updated photos
+        photos = await self.photo_repo.get_extra_photos(user_id)
 
         await cache.invalidate_user_profile(user_id)
-        logger.info("profile_photo_removed", user_id=str(user_id), count=result["photo_count"])
-        return result["success"], result["photo_count"], _parse_photos_array(profile["profile_photos_extra"])
+        logger.info("profile_photo_removed", user_id=str(user_id), count=result.get("photo_count"))
+        return result.get("success"), result.get("photo_count"), photos
 
-photo_service = PhotoService()
+def get_photo_service(db: Database = Depends(get_db)) -> PhotoService:
+    """Dependency provider for PhotoService."""
+    repo = PhotoRepository(db)
+    return PhotoService(repo)
