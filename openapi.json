@@ -1,0 +1,3059 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "User Profile API",
+    "description": "User Profile API - Complete user lifecycle management with profiles, photos, interests, settings, and verification",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/v1/users/search": {
+      "get": {
+        "tags": [
+          "User Search"
+        ],
+        "summary": "Search Users",
+        "description": "Search users by name or username.",
+        "operationId": "search_users_api_v1_users_search_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 2,
+              "description": "Search query",
+              "title": "Q"
+            },
+            "description": "Search query"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "default": 20,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserSearchResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/me": {
+      "get": {
+        "tags": [
+          "Profile Management"
+        ],
+        "summary": "Get My Profile",
+        "description": "Get current user's complete profile.",
+        "operationId": "get_my_profile_api_v1_users_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfileResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Profile Management"
+        ],
+        "summary": "Delete Account",
+        "description": "Delete user account (soft delete).",
+        "operationId": "delete_account_api_v1_users_me_delete",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteAccountRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteAccountResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "Profile Management"
+        ],
+        "summary": "Update My Profile",
+        "description": "Update current user's profile.",
+        "operationId": "update_my_profile_api_v1_users_me_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfileRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateProfileResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/users/{user_id}": {
+      "get": {
+        "tags": [
+          "Profile Management"
+        ],
+        "summary": "Get User Profile",
+        "description": "Get another user's public profile.",
+        "operationId": "get_user_profile_api_v1_users__user_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicUserProfileResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/me/username": {
+      "patch": {
+        "tags": [
+          "Profile Management"
+        ],
+        "summary": "Update Username",
+        "description": "Change username.",
+        "operationId": "update_username_api_v1_users_me_username_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUsernameRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateUsernameResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/users/me/photos/main": {
+      "post": {
+        "tags": [
+          "Photo Management"
+        ],
+        "summary": "Set Main Photo",
+        "description": "Set main profile photo.",
+        "operationId": "set_main_photo_api_v1_users_me_photos_main_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetMainPhotoRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetMainPhotoResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/users/me/photos": {
+      "post": {
+        "tags": [
+          "Photo Management"
+        ],
+        "summary": "Add Profile Photo",
+        "description": "Add photo to extra photos array.",
+        "operationId": "add_profile_photo_api_v1_users_me_photos_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddProfilePhotoRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddProfilePhotoResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Photo Management"
+        ],
+        "summary": "Remove Profile Photo",
+        "description": "Remove photo from extra photos array.",
+        "operationId": "remove_profile_photo_api_v1_users_me_photos_delete",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemoveProfilePhotoRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoveProfilePhotoResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/users/me/interests": {
+      "get": {
+        "tags": [
+          "Interest Tags"
+        ],
+        "summary": "Get Interests",
+        "description": "Get current user's interests.",
+        "operationId": "get_interests_api_v1_users_me_interests_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetInterestsResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "Interest Tags"
+        ],
+        "summary": "Set Interests",
+        "description": "Replace all interests (bulk update).",
+        "operationId": "set_interests_api_v1_users_me_interests_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetInterestsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetInterestsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Interest Tags"
+        ],
+        "summary": "Add Interest",
+        "description": "Add single interest.",
+        "operationId": "add_interest_api_v1_users_me_interests_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddInterestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddInterestResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/users/me/interests/{tag}": {
+      "delete": {
+        "tags": [
+          "Interest Tags"
+        ],
+        "summary": "Remove Interest",
+        "description": "Remove single interest.",
+        "operationId": "remove_interest_api_v1_users_me_interests__tag__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tag",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tag"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoveInterestResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/me/settings": {
+      "get": {
+        "tags": [
+          "User Settings"
+        ],
+        "summary": "Get Settings",
+        "description": "Get current user's settings.",
+        "operationId": "get_settings_api_v1_users_me_settings_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__settings__UserSettingsResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "User Settings"
+        ],
+        "summary": "Update Settings",
+        "description": "Update user settings (partial update).",
+        "operationId": "update_settings_api_v1_users_me_settings_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserSettingsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateUserSettingsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/users/me/subscription": {
+      "get": {
+        "tags": [
+          "Subscription Management"
+        ],
+        "summary": "Get Subscription",
+        "description": "Get current subscription details.",
+        "operationId": "get_subscription_api_v1_users_me_subscription_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Subscription Management"
+        ],
+        "summary": "Update Subscription",
+        "description": "Update subscription (payment processor only).",
+        "operationId": "update_subscription_api_v1_users_me_subscription_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-Payment-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Payment-Api-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSubscriptionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateSubscriptionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/{user_id}/captain": {
+      "post": {
+        "tags": [
+          "Captain Program"
+        ],
+        "summary": "Grant Captain Status",
+        "description": "Grant Captain status (admin only).",
+        "operationId": "grant_captain_status_api_v1_users__user_id__captain_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "User Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetCaptainStatusRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetCaptainStatusResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Captain Program"
+        ],
+        "summary": "Revoke Captain Status",
+        "description": "Revoke Captain status (admin only).",
+        "operationId": "revoke_captain_status_api_v1_users__user_id__captain_delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetCaptainStatusResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/me/verification": {
+      "get": {
+        "tags": [
+          "Trust & Verification"
+        ],
+        "summary": "Get Verification Metrics",
+        "description": "Get verification and trust metrics.",
+        "operationId": "get_verification_metrics_api_v1_users_me_verification_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationMetricsResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/users/{user_id}/verify": {
+      "post": {
+        "tags": [
+          "Trust & Verification"
+        ],
+        "summary": "Increment Verification",
+        "description": "Increment verification count (service-to-service).",
+        "operationId": "increment_verification_api_v1_users__user_id__verify_post",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "User Id"
+            }
+          },
+          {
+            "name": "X-Service-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Service-Api-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncrementVerificationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/{user_id}/no-show": {
+      "post": {
+        "tags": [
+          "Trust & Verification"
+        ],
+        "summary": "Increment No Show",
+        "description": "Increment no-show count (service-to-service).",
+        "operationId": "increment_no_show_api_v1_users__user_id__no_show_post",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "User Id"
+            }
+          },
+          {
+            "name": "X-Service-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Service-Api-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncrementNoShowResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/{user_id}/activity-counters": {
+      "post": {
+        "tags": [
+          "Trust & Verification"
+        ],
+        "summary": "Update Activity Counters",
+        "description": "Update activity counters (service-to-service).",
+        "operationId": "update_activity_counters_api_v1_users__user_id__activity_counters_post",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "User Id"
+            }
+          },
+          {
+            "name": "X-Service-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Service-Api-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateActivityCountersRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateActivityCountersResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/me/heartbeat": {
+      "post": {
+        "tags": [
+          "Activity Tracking"
+        ],
+        "summary": "Update Heartbeat",
+        "description": "Update last seen timestamp.",
+        "operationId": "update_heartbeat_api_v1_users_me_heartbeat_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HeartbeatResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/users/photo-moderation": {
+      "get": {
+        "tags": [
+          "Admin Moderation"
+        ],
+        "summary": "Get Pending Photo Moderations",
+        "description": "Get pending main photo moderations.",
+        "operationId": "get_pending_photo_moderations_api_v1_admin_users_photo_moderation_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PendingPhotoModerationsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/users/{user_id}/photo-moderation": {
+      "post": {
+        "tags": [
+          "Admin Moderation"
+        ],
+        "summary": "Moderate Photo",
+        "description": "Approve or reject main photo.",
+        "operationId": "moderate_photo_api_v1_admin_users__user_id__photo_moderation_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "User Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModeratePhotoRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModeratePhotoResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/users/{user_id}/ban": {
+      "post": {
+        "tags": [
+          "Admin Moderation"
+        ],
+        "summary": "Ban User",
+        "description": "Ban user (temporary or permanent).",
+        "operationId": "ban_user_api_v1_admin_users__user_id__ban_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "User Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BanUserRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BanUserResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin Moderation"
+        ],
+        "summary": "Unban User",
+        "description": "Remove ban from user.",
+        "operationId": "unban_user_api_v1_admin_users__user_id__ban_delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnbanUserResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AddInterestRequest": {
+        "properties": {
+          "tag": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Tag",
+            "description": "Interest tag name"
+          },
+          "weight": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Weight",
+            "description": "Interest weight (0.0-1.0)",
+            "default": 1.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "tag"
+        ],
+        "title": "AddInterestRequest",
+        "description": "Request to add single interest."
+      },
+      "AddInterestResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": "Interest added successfully"
+          }
+        },
+        "type": "object",
+        "title": "AddInterestResponse",
+        "description": "Response after adding interest."
+      },
+      "AddProfilePhotoRequest": {
+        "properties": {
+          "photo_url": {
+            "type": "string",
+            "maxLength": 500,
+            "title": "Photo Url",
+            "description": "Photo URL from image-api CDN"
+          }
+        },
+        "type": "object",
+        "required": [
+          "photo_url"
+        ],
+        "title": "AddProfilePhotoRequest",
+        "description": "Request to add photo to extra photos."
+      },
+      "AddProfilePhotoResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "photo_count": {
+            "type": "integer",
+            "title": "Photo Count"
+          },
+          "profile_photos_extra": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Profile Photos Extra"
+          }
+        },
+        "type": "object",
+        "required": [
+          "photo_count",
+          "profile_photos_extra"
+        ],
+        "title": "AddProfilePhotoResponse",
+        "description": "Response after adding photo."
+      },
+      "BanUserRequest": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 1000,
+            "title": "Reason",
+            "description": "Reason for ban"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At",
+            "description": "Ban expiry (NULL = permanent)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "title": "BanUserRequest",
+        "description": "Request to ban user (temporary or permanent)."
+      },
+      "BanUserResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/UserStatus"
+          },
+          "ban_reason": {
+            "type": "string",
+            "title": "Ban Reason"
+          },
+          "ban_expires_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ban Expires At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "status",
+          "ban_reason"
+        ],
+        "title": "BanUserResponse",
+        "description": "Response after banning user."
+      },
+      "DeleteAccountRequest": {
+        "properties": {
+          "password": {
+            "type": "string",
+            "title": "Password",
+            "description": "Current password for verification"
+          },
+          "confirmation": {
+            "type": "string",
+            "title": "Confirmation",
+            "description": "Must be exactly 'DELETE MY ACCOUNT'"
+          }
+        },
+        "type": "object",
+        "required": [
+          "password",
+          "confirmation"
+        ],
+        "title": "DeleteAccountRequest",
+        "description": "Request to delete user account."
+      },
+      "DeleteAccountResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": "Account deleted successfully"
+          }
+        },
+        "type": "object",
+        "title": "DeleteAccountResponse",
+        "description": "Response after account deletion."
+      },
+      "GetInterestsResponse": {
+        "properties": {
+          "interests": {
+            "items": {
+              "$ref": "#/components/schemas/InterestTag"
+            },
+            "type": "array",
+            "title": "Interests"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "count"
+        ],
+        "title": "GetInterestsResponse",
+        "description": "Response with user interests."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HeartbeatResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "last_seen_at": {
+            "type": "string",
+            "title": "Last Seen At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "last_seen_at"
+        ],
+        "title": "HeartbeatResponse",
+        "description": "Response after updating last seen timestamp."
+      },
+      "IncrementNoShowResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "new_no_show_count": {
+            "type": "integer",
+            "title": "New No Show Count"
+          },
+          "warning": {
+            "type": "string",
+            "title": "Warning",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "new_no_show_count"
+        ],
+        "title": "IncrementNoShowResponse",
+        "description": "Response after incrementing no-show count."
+      },
+      "IncrementVerificationResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "new_verification_count": {
+            "type": "integer",
+            "title": "New Verification Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "new_verification_count"
+        ],
+        "title": "IncrementVerificationResponse",
+        "description": "Response after incrementing verification count."
+      },
+      "InterestTag": {
+        "properties": {
+          "tag": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Tag",
+            "description": "Interest tag name"
+          },
+          "weight": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Weight",
+            "description": "Interest weight (0.0-1.0)",
+            "default": 1.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "tag"
+        ],
+        "title": "InterestTag",
+        "description": "Interest tag with weight."
+      },
+      "ModeratePhotoRequest": {
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/PhotoModerationStatus"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "ModeratePhotoRequest",
+        "description": "Request to approve or reject main photo."
+      },
+      "ModeratePhotoResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "moderation_status": {
+            "$ref": "#/components/schemas/PhotoModerationStatus"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "moderation_status"
+        ],
+        "title": "ModeratePhotoResponse",
+        "description": "Response after moderating photo."
+      },
+      "PendingPhotoModeration": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "main_photo_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Main Photo Url"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "username",
+          "email",
+          "main_photo_url",
+          "created_at"
+        ],
+        "title": "PendingPhotoModeration",
+        "description": "Single pending photo moderation entry."
+      },
+      "PendingPhotoModerationsResponse": {
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/PendingPhotoModeration"
+            },
+            "type": "array",
+            "title": "Results"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          }
+        },
+        "type": "object",
+        "required": [
+          "results",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "PendingPhotoModerationsResponse",
+        "description": "List of pending photo moderations."
+      },
+      "PhotoModerationStatus": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "approved",
+          "rejected"
+        ],
+        "title": "PhotoModerationStatus",
+        "description": "Photo moderation status enumeration."
+      },
+      "PublicUserProfileResponse": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username"
+          },
+          "first_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Name"
+          },
+          "last_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Name"
+          },
+          "profile_description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profile Description"
+          },
+          "main_photo_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Main Photo Url"
+          },
+          "main_photo_moderation_status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PhotoModerationStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "profile_photos_extra": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Profile Photos Extra"
+          },
+          "gender": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gender"
+          },
+          "is_verified": {
+            "type": "boolean",
+            "title": "Is Verified"
+          },
+          "verification_count": {
+            "type": "integer",
+            "title": "Verification Count"
+          },
+          "activities_created_count": {
+            "type": "integer",
+            "title": "Activities Created Count"
+          },
+          "activities_attended_count": {
+            "type": "integer",
+            "title": "Activities Attended Count"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "interests": {
+            "items": {
+              "$ref": "#/components/schemas/InterestTag"
+            },
+            "type": "array",
+            "title": "Interests"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "username",
+          "first_name",
+          "last_name",
+          "profile_description",
+          "main_photo_url",
+          "main_photo_moderation_status",
+          "gender",
+          "is_verified",
+          "verification_count",
+          "activities_created_count",
+          "activities_attended_count",
+          "created_at"
+        ],
+        "title": "PublicUserProfileResponse",
+        "description": "Public user profile (excludes sensitive information)."
+      },
+      "RemoveInterestResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": "Interest removed successfully"
+          }
+        },
+        "type": "object",
+        "title": "RemoveInterestResponse",
+        "description": "Response after removing interest."
+      },
+      "RemoveProfilePhotoRequest": {
+        "properties": {
+          "photo_url": {
+            "type": "string",
+            "maxLength": 500,
+            "title": "Photo Url",
+            "description": "Photo URL to remove"
+          }
+        },
+        "type": "object",
+        "required": [
+          "photo_url"
+        ],
+        "title": "RemoveProfilePhotoRequest",
+        "description": "Request to remove photo from extra photos."
+      },
+      "RemoveProfilePhotoResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "photo_count": {
+            "type": "integer",
+            "title": "Photo Count"
+          },
+          "profile_photos_extra": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Profile Photos Extra"
+          }
+        },
+        "type": "object",
+        "required": [
+          "photo_count",
+          "profile_photos_extra"
+        ],
+        "title": "RemoveProfilePhotoResponse",
+        "description": "Response after removing photo."
+      },
+      "SetCaptainStatusRequest": {
+        "properties": {
+          "is_captain": {
+            "type": "boolean",
+            "title": "Is Captain"
+          }
+        },
+        "type": "object",
+        "required": [
+          "is_captain"
+        ],
+        "title": "SetCaptainStatusRequest",
+        "description": "Request to grant/revoke captain status."
+      },
+      "SetCaptainStatusResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "user_id": {
+            "type": "string",
+            "title": "User Id"
+          },
+          "is_captain": {
+            "type": "boolean",
+            "title": "Is Captain"
+          },
+          "captain_since": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Captain Since"
+          },
+          "subscription_level": {
+            "$ref": "#/components/schemas/SubscriptionLevel"
+          },
+          "subscription_expires_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subscription Expires At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "is_captain",
+          "subscription_level"
+        ],
+        "title": "SetCaptainStatusResponse",
+        "description": "Response after setting captain status."
+      },
+      "SetInterestsRequest": {
+        "properties": {
+          "interests": {
+            "items": {
+              "$ref": "#/components/schemas/InterestTag"
+            },
+            "type": "array",
+            "maxItems": 20,
+            "title": "Interests",
+            "description": "List of interests (max 20)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "interests"
+        ],
+        "title": "SetInterestsRequest",
+        "description": "Request to replace all interests (bulk update)."
+      },
+      "SetInterestsResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "interest_count": {
+            "type": "integer",
+            "title": "Interest Count"
+          },
+          "interests": {
+            "items": {
+              "$ref": "#/components/schemas/InterestTag"
+            },
+            "type": "array",
+            "title": "Interests"
+          }
+        },
+        "type": "object",
+        "required": [
+          "interest_count",
+          "interests"
+        ],
+        "title": "SetInterestsResponse",
+        "description": "Response after setting interests."
+      },
+      "SetMainPhotoRequest": {
+        "properties": {
+          "photo_url": {
+            "type": "string",
+            "maxLength": 500,
+            "title": "Photo Url",
+            "description": "Photo URL from image-api CDN"
+          }
+        },
+        "type": "object",
+        "required": [
+          "photo_url"
+        ],
+        "title": "SetMainPhotoRequest",
+        "description": "Request to set main profile photo."
+      },
+      "SetMainPhotoResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "main_photo_url": {
+            "type": "string",
+            "title": "Main Photo Url"
+          },
+          "moderation_status": {
+            "$ref": "#/components/schemas/PhotoModerationStatus"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": "Photo uploaded. Awaiting moderation approval."
+          }
+        },
+        "type": "object",
+        "required": [
+          "main_photo_url",
+          "moderation_status"
+        ],
+        "title": "SetMainPhotoResponse",
+        "description": "Response after setting main photo."
+      },
+      "SubscriptionLevel": {
+        "type": "string",
+        "enum": [
+          "free",
+          "club",
+          "premium"
+        ],
+        "title": "SubscriptionLevel",
+        "description": "Subscription tier enumeration."
+      },
+      "SubscriptionResponse": {
+        "properties": {
+          "subscription_level": {
+            "$ref": "#/components/schemas/SubscriptionLevel"
+          },
+          "subscription_expires_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subscription Expires At"
+          },
+          "is_captain": {
+            "type": "boolean",
+            "title": "Is Captain"
+          },
+          "days_remaining": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days Remaining"
+          }
+        },
+        "type": "object",
+        "required": [
+          "subscription_level",
+          "subscription_expires_at",
+          "is_captain"
+        ],
+        "title": "SubscriptionResponse",
+        "description": "Subscription details response."
+      },
+      "UnbanUserResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/UserStatus",
+            "default": "active"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id"
+        ],
+        "title": "UnbanUserResponse",
+        "description": "Response after unbanning user."
+      },
+      "UpdateActivityCountersRequest": {
+        "properties": {
+          "created_delta": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": -100.0,
+            "title": "Created Delta",
+            "description": "Change in created count"
+          },
+          "attended_delta": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": -100.0,
+            "title": "Attended Delta",
+            "description": "Change in attended count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "created_delta",
+          "attended_delta"
+        ],
+        "title": "UpdateActivityCountersRequest",
+        "description": "Request to update activity counters."
+      },
+      "UpdateActivityCountersResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "activities_created_count": {
+            "type": "integer",
+            "title": "Activities Created Count"
+          },
+          "activities_attended_count": {
+            "type": "integer",
+            "title": "Activities Attended Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "activities_created_count",
+          "activities_attended_count"
+        ],
+        "title": "UpdateActivityCountersResponse",
+        "description": "Response after updating activity counters."
+      },
+      "UpdateProfileRequest": {
+        "properties": {
+          "first_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Name"
+          },
+          "last_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Name"
+          },
+          "profile_description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 5000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profile Description"
+          },
+          "date_of_birth": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date Of Birth"
+          },
+          "gender": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 50
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gender"
+          }
+        },
+        "type": "object",
+        "title": "UpdateProfileRequest",
+        "description": "Request to update user profile fields."
+      },
+      "UpdateProfileResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "updated_at"
+        ],
+        "title": "UpdateProfileResponse",
+        "description": "Response after updating profile."
+      },
+      "UpdateSubscriptionRequest": {
+        "properties": {
+          "subscription_level": {
+            "$ref": "#/components/schemas/SubscriptionLevel"
+          },
+          "subscription_expires_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subscription Expires At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "subscription_level"
+        ],
+        "title": "UpdateSubscriptionRequest",
+        "description": "Request to update subscription (admin or payment processor only)."
+      },
+      "UpdateSubscriptionResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "subscription_level": {
+            "$ref": "#/components/schemas/SubscriptionLevel"
+          },
+          "subscription_expires_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subscription Expires At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "subscription_level",
+          "subscription_expires_at"
+        ],
+        "title": "UpdateSubscriptionResponse",
+        "description": "Response after updating subscription."
+      },
+      "UpdateUserSettingsRequest": {
+        "properties": {
+          "email_notifications": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email Notifications"
+          },
+          "push_notifications": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Push Notifications"
+          },
+          "activity_reminders": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activity Reminders"
+          },
+          "community_updates": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Community Updates"
+          },
+          "friend_requests": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Friend Requests"
+          },
+          "marketing_emails": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Marketing Emails"
+          },
+          "ghost_mode": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ghost Mode"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 10,
+                "minLength": 2
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language",
+            "description": "ISO 639-1 language code"
+          },
+          "timezone": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 50
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timezone",
+            "description": "IANA timezone string"
+          }
+        },
+        "type": "object",
+        "title": "UpdateUserSettingsRequest",
+        "description": "Request to update user settings (partial update)."
+      },
+      "UpdateUserSettingsResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "settings": {
+            "$ref": "#/components/schemas/app__schemas__settings__UserSettingsResponse"
+          }
+        },
+        "type": "object",
+        "required": [
+          "settings"
+        ],
+        "title": "UpdateUserSettingsResponse",
+        "description": "Response after updating settings."
+      },
+      "UpdateUsernameRequest": {
+        "properties": {
+          "new_username": {
+            "type": "string",
+            "maxLength": 30,
+            "minLength": 3,
+            "pattern": "^[a-zA-Z0-9_]{3,30}$",
+            "title": "New Username"
+          }
+        },
+        "type": "object",
+        "required": [
+          "new_username"
+        ],
+        "title": "UpdateUsernameRequest",
+        "description": "Request to change username."
+      },
+      "UpdateUsernameResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "username": {
+            "type": "string",
+            "title": "Username"
+          }
+        },
+        "type": "object",
+        "required": [
+          "username"
+        ],
+        "title": "UpdateUsernameResponse",
+        "description": "Response after changing username."
+      },
+      "UserProfileResponse": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username"
+          },
+          "first_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Name"
+          },
+          "last_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Name"
+          },
+          "profile_description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profile Description"
+          },
+          "main_photo_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Main Photo Url"
+          },
+          "main_photo_moderation_status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PhotoModerationStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "profile_photos_extra": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Profile Photos Extra"
+          },
+          "date_of_birth": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date Of Birth"
+          },
+          "gender": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gender"
+          },
+          "subscription_level": {
+            "$ref": "#/components/schemas/SubscriptionLevel"
+          },
+          "subscription_expires_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subscription Expires At"
+          },
+          "is_captain": {
+            "type": "boolean",
+            "title": "Is Captain"
+          },
+          "captain_since": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Captain Since"
+          },
+          "is_verified": {
+            "type": "boolean",
+            "title": "Is Verified"
+          },
+          "verification_count": {
+            "type": "integer",
+            "title": "Verification Count"
+          },
+          "no_show_count": {
+            "type": "integer",
+            "title": "No Show Count"
+          },
+          "activities_created_count": {
+            "type": "integer",
+            "title": "Activities Created Count"
+          },
+          "activities_attended_count": {
+            "type": "integer",
+            "title": "Activities Attended Count"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "last_seen_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Seen At"
+          },
+          "interests": {
+            "items": {
+              "$ref": "#/components/schemas/InterestTag"
+            },
+            "type": "array",
+            "title": "Interests"
+          },
+          "settings": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/app__schemas__profile__UserSettingsResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "email",
+          "username",
+          "first_name",
+          "last_name",
+          "profile_description",
+          "main_photo_url",
+          "main_photo_moderation_status",
+          "date_of_birth",
+          "gender",
+          "subscription_level",
+          "subscription_expires_at",
+          "is_captain",
+          "captain_since",
+          "is_verified",
+          "verification_count",
+          "no_show_count",
+          "activities_created_count",
+          "activities_attended_count",
+          "created_at",
+          "last_seen_at",
+          "settings"
+        ],
+        "title": "UserProfileResponse",
+        "description": "Complete user profile response."
+      },
+      "UserSearchResponse": {
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/UserSearchResult"
+            },
+            "type": "array",
+            "title": "Results"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          }
+        },
+        "type": "object",
+        "required": [
+          "results",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "UserSearchResponse",
+        "description": "User search results with pagination."
+      },
+      "UserSearchResult": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username"
+          },
+          "first_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Name"
+          },
+          "last_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Name"
+          },
+          "main_photo_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Main Photo Url"
+          },
+          "is_verified": {
+            "type": "boolean",
+            "title": "Is Verified"
+          },
+          "verification_count": {
+            "type": "integer",
+            "title": "Verification Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "username",
+          "first_name",
+          "last_name",
+          "main_photo_url",
+          "is_verified",
+          "verification_count"
+        ],
+        "title": "UserSearchResult",
+        "description": "Single user search result."
+      },
+      "UserStatus": {
+        "type": "string",
+        "enum": [
+          "active",
+          "temporary_ban",
+          "banned"
+        ],
+        "title": "UserStatus",
+        "description": "User account status enumeration."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "VerificationMetricsResponse": {
+        "properties": {
+          "verification_count": {
+            "type": "integer",
+            "title": "Verification Count"
+          },
+          "no_show_count": {
+            "type": "integer",
+            "title": "No Show Count"
+          },
+          "is_verified": {
+            "type": "boolean",
+            "title": "Is Verified"
+          },
+          "trust_score": {
+            "type": "number",
+            "title": "Trust Score"
+          },
+          "activities_attended_count": {
+            "type": "integer",
+            "title": "Activities Attended Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "verification_count",
+          "no_show_count",
+          "is_verified",
+          "trust_score",
+          "activities_attended_count"
+        ],
+        "title": "VerificationMetricsResponse",
+        "description": "User verification and trust metrics."
+      },
+      "app__schemas__profile__UserSettingsResponse": {
+        "properties": {
+          "email_notifications": {
+            "type": "boolean",
+            "title": "Email Notifications",
+            "default": true
+          },
+          "push_notifications": {
+            "type": "boolean",
+            "title": "Push Notifications",
+            "default": true
+          },
+          "activity_reminders": {
+            "type": "boolean",
+            "title": "Activity Reminders",
+            "default": true
+          },
+          "community_updates": {
+            "type": "boolean",
+            "title": "Community Updates",
+            "default": true
+          },
+          "friend_requests": {
+            "type": "boolean",
+            "title": "Friend Requests",
+            "default": true
+          },
+          "marketing_emails": {
+            "type": "boolean",
+            "title": "Marketing Emails",
+            "default": false
+          },
+          "ghost_mode": {
+            "type": "boolean",
+            "title": "Ghost Mode",
+            "default": false
+          },
+          "language": {
+            "type": "string",
+            "title": "Language",
+            "default": "en"
+          },
+          "timezone": {
+            "type": "string",
+            "title": "Timezone",
+            "default": "Europe/Amsterdam"
+          }
+        },
+        "type": "object",
+        "title": "UserSettingsResponse",
+        "description": "User settings embedded in profile response."
+      },
+      "app__schemas__settings__UserSettingsResponse": {
+        "properties": {
+          "email_notifications": {
+            "type": "boolean",
+            "title": "Email Notifications"
+          },
+          "push_notifications": {
+            "type": "boolean",
+            "title": "Push Notifications"
+          },
+          "activity_reminders": {
+            "type": "boolean",
+            "title": "Activity Reminders"
+          },
+          "community_updates": {
+            "type": "boolean",
+            "title": "Community Updates"
+          },
+          "friend_requests": {
+            "type": "boolean",
+            "title": "Friend Requests"
+          },
+          "marketing_emails": {
+            "type": "boolean",
+            "title": "Marketing Emails"
+          },
+          "ghost_mode": {
+            "type": "boolean",
+            "title": "Ghost Mode"
+          },
+          "language": {
+            "type": "string",
+            "title": "Language"
+          },
+          "timezone": {
+            "type": "string",
+            "title": "Timezone"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email_notifications",
+          "push_notifications",
+          "activity_reminders",
+          "community_updates",
+          "friend_requests",
+          "marketing_emails",
+          "ghost_mode",
+          "language",
+          "timezone"
+        ],
+        "title": "UserSettingsResponse",
+        "description": "User settings response."
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}

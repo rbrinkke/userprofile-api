@@ -24,7 +24,7 @@ services:
       - DATABASE_POOL_MAX_SIZE=20
 
       # Redis - Gedeelde Redis instance
-      - REDIS_URL=redis://auth-redis:6379/0
+      - REDIS_URL=redis://:redis_secure_pass_change_me@activity-redis:6379/0
       - REDIS_CACHE_DB=0
       - REDIS_RATE_LIMIT_DB=1
 
