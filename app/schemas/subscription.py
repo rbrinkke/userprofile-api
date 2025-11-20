@@ -14,6 +14,7 @@ class SubscriptionResponse(BaseModel):
     subscription_level: SubscriptionLevel
     subscription_expires_at: Optional[datetime]
     is_captain: bool
+    captain_since: Optional[datetime] = None
     days_remaining: Optional[int] = None
 
     @validator("days_remaining", always=True)

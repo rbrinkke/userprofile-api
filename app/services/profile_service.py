@@ -1,16 +1,17 @@
 """
 Profile Service - Handles all profile management business logic.
-Interacts with database stored procedures and manages cache invalidation.
+Interacts with ProfileRepository and manages cache invalidation.
 """
-import json
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
 
+from fastapi import Depends
+
 from app.core.cache import cache
-from app.core.database import db
+from app.core.database import Database, get_db
 from app.core.exceptions import ResourceNotFoundError, ResourceDuplicateError
 from app.core.logging_config import get_logger
+from app.repositories.profile_repository import ProfileRepository
 from app.schemas.profile import (
     PublicUserProfileResponse,
     UpdateProfileRequest,
@@ -20,27 +21,14 @@ from app.schemas.profile import (
 logger = get_logger(__name__)
 
 
-def _parse_json_fields(data: dict) -> dict:
-    """
-    Parse JSON string fields to actual Python objects.
-    PostgreSQL JSONB columns are returned as strings by asyncpg.
-    """
-    json_fields = ['profile_photos_extra', 'interests', 'settings']
-    for field in json_fields:
-        if field in data and isinstance(data[field], str):
-            try:
-                data[field] = json.loads(data[field])
-            except (json.JSONDecodeError, TypeError):
-                # If parsing fails, default to empty list/dict
-                data[field] = [] if field != 'settings' else {}
-    return data
-
-
 class ProfileService:
     """
     Service for profile management operations.
-    All methods interact with stored procedures and handle caching.
+    All methods interact with ProfileRepository and handle caching.
     """
+
+    def __init__(self, profile_repo: ProfileRepository):
+        self.profile_repo = profile_repo
 
     async def get_user_profile(
         self,
@@ -50,17 +38,6 @@ class ProfileService:
     ) -> UserProfileResponse:
         """
         Get complete user profile with interests and settings.
-
-        Args:
-            user_id: User ID to retrieve
-            requesting_user_id: User making the request (for blocking checks)
-            use_cache: Whether to use cached data
-
-        Returns:
-            UserProfileResponse
-
-        Raises:
-            ResourceNotFoundError: If user not found or blocked
         """
         # Try cache first (only for own profile)
         if use_cache and user_id == requesting_user_id:
@@ -69,24 +46,16 @@ class ProfileService:
                 logger.debug("profile_cache_hit", user_id=str(user_id))
                 return UserProfileResponse(**cached_profile)
 
-        # Call stored procedure
-        result = await db.fetch_one(
-            "SELECT * FROM activity.sp_get_user_profile($1, $2)",
-            user_id,
-            requesting_user_id,
-        )
+        # Call repository
+        profile = await self.profile_repo.get_by_user_id(user_id, requesting_user_id)
 
-        if not result:
+        if not profile:
             logger.warning(
                 "profile_not_found_or_blocked",
                 user_id=str(user_id),
                 requesting_user_id=str(requesting_user_id),
             )
             raise ResourceNotFoundError(resource="User")
-
-        # Parse JSON fields and convert to response model
-        parsed_result = _parse_json_fields(result)
-        profile = UserProfileResponse(**parsed_result)
 
         # Cache own profile
         if user_id == requesting_user_id:
@@ -103,17 +72,6 @@ class ProfileService:
     ) -> PublicUserProfileResponse:
         """
         Get public user profile (excluding sensitive information).
-
-        Args:
-            user_id: User ID to retrieve
-            requesting_user_id: User making the request
-            ghost_mode: Whether requesting user has ghost mode enabled
-
-        Returns:
-            PublicUserProfileResponse
-
-        Raises:
-            ResourceNotFoundError: If user not found or blocked
         """
         # Get full profile
         full_profile = await self.get_user_profile(user_id, requesting_user_id, use_cache=True)
@@ -121,14 +79,7 @@ class ProfileService:
         # Create profile view record (only if not ghost mode)
         if not ghost_mode and user_id != requesting_user_id:
             try:
-                await db.execute(
-                    """
-                    INSERT INTO activity.profile_views (viewer_user_id, viewed_user_id, viewed_at)
-                    VALUES ($1, $2, NOW())
-                    """,
-                    requesting_user_id,
-                    user_id,
-                )
+                await self.profile_repo.record_profile_view(requesting_user_id, user_id)
                 logger.debug("profile_view_recorded", viewer=str(requesting_user_id), viewed=str(user_id))
             except Exception as e:
                 logger.error("profile_view_record_failed", error=str(e))
@@ -161,32 +112,10 @@ class ProfileService:
     ) -> datetime:
         """
         Update user profile fields.
-
-        Args:
-            user_id: User ID to update
-            update_data: Profile update data
-
-        Returns:
-            Updated timestamp
-
-        Raises:
-            ResourceNotFoundError: If user not found
         """
-        result = await db.fetch_one(
-            """
-            SELECT * FROM activity.sp_update_user_profile(
-                $1, $2, $3, $4, $5, $6
-            )
-            """,
-            user_id,
-            update_data.first_name,
-            update_data.last_name,
-            update_data.profile_description,
-            update_data.date_of_birth,
-            update_data.gender,
-        )
+        updated_at = await self.profile_repo.update(user_id, update_data)
 
-        if not result or not result["success"]:
+        if not updated_at:
             logger.warning("profile_update_failed", user_id=str(user_id))
             raise ResourceNotFoundError(resource="User")
 
@@ -194,7 +123,7 @@ class ProfileService:
         await cache.invalidate_user_profile(user_id)
 
         logger.info("profile_updated", user_id=str(user_id))
-        return result["updated_at"]
+        return updated_at
 
     async def update_username(
         self,
@@ -203,26 +132,11 @@ class ProfileService:
     ) -> str:
         """
         Change username (must be unique).
-
-        Args:
-            user_id: User ID
-            new_username: New username
-
-        Returns:
-            New username
-
-        Raises:
-            ResourceNotFoundError: If user not found
-            ResourceDuplicateError: If username already taken
         """
-        result = await db.fetch_one(
-            "SELECT * FROM activity.sp_update_username($1, $2)",
-            user_id,
-            new_username,
-        )
+        result = await self.profile_repo.update_username(user_id, new_username)
 
-        if not result["success"]:
-            if "already taken" in result["message"]:
+        if not result.get("success"):
+            if "already taken" in result.get("message", ""):
                 logger.warning("username_taken", username=new_username)
                 raise ResourceDuplicateError(field="username", value=new_username)
             else:
@@ -241,22 +155,10 @@ class ProfileService:
     ) -> bool:
         """
         Soft delete user account (GDPR compliance).
-
-        Args:
-            user_id: User ID to delete
-
-        Returns:
-            True if successful
-
-        Raises:
-            ResourceNotFoundError: If user not found
         """
-        result = await db.fetch_one(
-            "SELECT * FROM activity.sp_delete_user_account($1)",
-            user_id,
-        )
+        success = await self.profile_repo.delete(user_id)
 
-        if not result or not result["success"]:
+        if not success:
             logger.warning("account_deletion_failed", user_id=str(user_id))
             raise ResourceNotFoundError(resource="User")
 
@@ -267,5 +169,9 @@ class ProfileService:
         return True
 
 
-# Global service instance
-profile_service = ProfileService()
+def get_profile_service(db: Database = Depends(get_db)) -> ProfileService:
+    """
+    Dependency provider for ProfileService.
+    """
+    repo = ProfileRepository(db)
+    return ProfileService(repo)
