@@ -15,7 +15,7 @@ class PendingPhotoModeration(BaseModel):
     user_id: UUID
     username: str
     email: str
-    main_photo_url: str
+    main_photo_url: Optional[str]  # Can be None if user hasn't uploaded photo yet
     created_at: datetime
 
     class Config:
@@ -82,8 +82,15 @@ class BanUserRequest(BaseModel):
     @validator("expires_at")
     def validate_expiry(cls, v):
         """Ensure expiry is in future if provided."""
-        if v and v <= datetime.utcnow():
-            raise ValueError("Ban expiry date must be in the future")
+        if v:
+            # Use timezone-aware datetime for comparison
+            from datetime import timezone
+            now = datetime.now(timezone.utc)
+            # Make v timezone-aware if it's naive
+            if v.tzinfo is None:
+                v = v.replace(tzinfo=timezone.utc)
+            if v <= now:
+                raise ValueError("Ban expiry date must be in the future")
         return v
 
     class Config:

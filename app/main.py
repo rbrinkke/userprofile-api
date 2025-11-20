@@ -93,15 +93,27 @@ app = FastAPI(
 # Middleware Configuration
 # ============================================================================
 
-# CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
-    allow_credentials=settings.CORS_ALLOW_CREDENTIALS,
-    allow_methods=["*"],
-    allow_headers=["*"],
-    expose_headers=["X-Trace-ID"],
-)
+# CORS - fully open in development, restricted in production
+if settings.is_development:
+    # Development: Allow ALL origins (no CORS restrictions)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=False,  # Can't use credentials with allow_origins=["*"]
+        allow_methods=["*"],
+        allow_headers=["*"],
+        expose_headers=["X-Trace-ID"],
+    )
+else:
+    # Production: Restricted CORS
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.CORS_ORIGINS,
+        allow_credentials=settings.CORS_ALLOW_CREDENTIALS,
+        allow_methods=["*"],
+        allow_headers=["*"],
+        expose_headers=["X-Trace-ID"],
+    )
 
 # Correlation ID middleware
 app.add_middleware(CorrelationMiddleware)
@@ -207,6 +219,8 @@ from app.routes import (
 )
 
 # Register routers with API version prefix
+# IMPORTANT: search.router MUST come before profile.router to avoid /search matching /{user_id}
+app.include_router(search.router, prefix=settings.API_V1_PREFIX, tags=["User Search"])
 app.include_router(profile.router, prefix=settings.API_V1_PREFIX, tags=["Profile Management"])
 app.include_router(photos.router, prefix=settings.API_V1_PREFIX, tags=["Photo Management"])
 app.include_router(interests.router, prefix=settings.API_V1_PREFIX, tags=["Interest Tags"])
@@ -214,7 +228,6 @@ app.include_router(settings_router.router, prefix=settings.API_V1_PREFIX, tags=[
 app.include_router(subscription.router, prefix=settings.API_V1_PREFIX, tags=["Subscription Management"])
 app.include_router(captain.router, prefix=settings.API_V1_PREFIX, tags=["Captain Program"])
 app.include_router(verification.router, prefix=settings.API_V1_PREFIX, tags=["Trust & Verification"])
-app.include_router(search.router, prefix=settings.API_V1_PREFIX, tags=["User Search"])
 app.include_router(heartbeat.router, prefix=settings.API_V1_PREFIX, tags=["Activity Tracking"])
 app.include_router(moderation.router, prefix=settings.API_V1_PREFIX, tags=["Admin Moderation"])
 

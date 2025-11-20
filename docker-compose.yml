@@ -29,7 +29,7 @@ services:
       - REDIS_RATE_LIMIT_DB=1
 
       # JWT (from auth-api - MUST match exactly)
-      - JWT_SECRET_KEY=dev_secret_key_change_in_production_min_32_chars_required
+      - JWT_SECRET_KEY=your_very_long_secret_key_at_least_32_characters
       - JWT_ALGORITHM=HS256
       - JWT_ACCESS_TOKEN_EXPIRE_MINUTES=15
 
