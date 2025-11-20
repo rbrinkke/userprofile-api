@@ -27,7 +27,9 @@ class SearchRepository:
             "SELECT * FROM activity.sp_search_users($1, $2, $3, $4)",
             query, requesting_user_id, limit, offset
         )
-        return self.search_result_adapter.validate_python(results)
+        # Convert asyncpg Record objects to dicts for Pydantic validation
+        results_as_dicts = [dict(row) for row in results]
+        return self.search_result_adapter.validate_python(results_as_dicts)
     async def update_last_seen(self, user_id: UUID) -> bool:
         """
         Update last seen timestamp.

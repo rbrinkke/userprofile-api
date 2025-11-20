@@ -30,11 +30,16 @@ class ProfileRepository:
             user_id,
             requesting_user_id,
         )
-        
+
         if not result:
             return None
 
-        return UserProfileResponse(**result)
+        # Transform empty settings dict to None (database returns {} when no settings)
+        result_dict = dict(result)
+        if result_dict.get("settings") == {}:
+            result_dict["settings"] = None
+
+        return UserProfileResponse(**result_dict)
 
     async def record_profile_view(self, viewer_id: UUID, viewed_id: UUID) -> None:
         """

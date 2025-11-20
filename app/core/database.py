@@ -30,8 +30,12 @@ class Database:
         """
         async def init_connection(conn):
             """Initialize connection with custom type codecs."""
+            # orjson.dumps returns bytes, but asyncpg needs str for text encoding
             await conn.set_type_codec(
-                'jsonb', encoder=orjson.dumps, decoder=orjson.loads, schema='pg_catalog'
+                'jsonb',
+                encoder=lambda x: orjson.dumps(x).decode('utf-8'),
+                decoder=orjson.loads,
+                schema='pg_catalog'
             )
 
         try:

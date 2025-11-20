@@ -26,6 +26,8 @@ class InterestRepository:
         """
         Set all interests (replaces existing).
         """
+        # Convert interests to list of dicts
+        # asyncpg will encode using the corrected JSONB codec (orjson with .decode('utf-8'))
         interests_data = [i.model_dump() for i in interests]
         result = await self.db.fetch_one(
             "SELECT * FROM activity.sp_set_user_interests($1, $2)",
