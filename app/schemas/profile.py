@@ -111,6 +111,9 @@ class UpdateProfileRequest(BaseModel):
     profile_description: str | None = Field(None, max_length=5000)
     date_of_birth: date | None = None
     gender: str | None = Field(None, max_length=50)
+    latitude: float | None = None
+    longitude: float | None = None
+    postal_code: str | None = None
 
     @field_validator("date_of_birth")
     @classmethod
@@ -133,7 +136,10 @@ class UpdateProfileRequest(BaseModel):
                 "last_name": "Doe",
                 "profile_description": "Updated bio text",
                 "date_of_birth": "1990-05-15",
-                "gender": "male"
+                "gender": "male",
+                "latitude": 52.3676,
+                "longitude": 4.9041,
+                "postal_code": "1012AB"
             }
         }
     )

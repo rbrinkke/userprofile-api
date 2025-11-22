@@ -1,9 +1,10 @@
-from typing import Optional, List
+from typing import Optional, List, Any
 from uuid import UUID, uuid4
 from datetime import date, datetime
 from sqlmodel import SQLModel, Field, Relationship
 from sqlalchemy import Column, String, Text, Boolean, Integer, Date, TIMESTAMP, ForeignKey
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
+from geoalchemy2 import Geography
 from enum import Enum
 
 # Enums need to be defined or imported.
@@ -73,6 +74,9 @@ class User(SQLModel, table=True):
     # Flexible storage
     payload: Optional[dict] = Field(default=None, sa_column=Column(JSONB))
     hash_value: Optional[str] = Field(default=None, max_length=64)
+
+    # Location
+    location: Optional[Any] = Field(default=None, sa_column=Column(Geography(geometry_type="POINT", srid=4326)))
 
     # Relationships
     settings: Optional["UserSettings"] = Relationship(sa_relationship_kwargs={"uselist": False}, back_populates="user")
