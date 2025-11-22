@@ -6,6 +6,7 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select, func, update, delete, or_
 from sqlalchemy.orm import selectinload
+from geoalchemy2 import WKTElement
 
 from app.core.database import get_db
 from app.models.user import User, UserStatus
@@ -138,6 +139,13 @@ class ProfileRepository:
         if update_data.gender is not None:
             user.gender = update_data.gender
 
+        # Handle location update
+        if update_data.latitude is not None and update_data.longitude is not None:
+            # Transform to WKT
+            # Note: WKT for POINT is 'POINT(lon lat)'
+            point = f'POINT({update_data.longitude} {update_data.latitude})'
+            user.location = WKTElement(point, srid=4326)
+
         user.updated_at = datetime.now()
         await self.session.commit()
         await self.session.refresh(user)
@@ -183,6 +191,28 @@ class ProfileRepository:
             username=new_username,
             message="Username updated successfully"
         )
+
+    async def get_users_within_radius(self, center_lat: float, center_lon: float, radius_km: float) -> List[tuple[User, float]]:
+        """
+        Find users within a specific radius in kilometers.
+        Returns a list of tuples (User, distance_in_meters).
+        """
+        # Create the center point
+        center_point = WKTElement(f'POINT({center_lon} {center_lat})', srid=4326)
+
+        # Query using ST_DWithin for filtering and ST_Distance for distance calculation
+        # ST_DWithin takes geometry/geography, other_geometry/geography, distance_in_meters
+        # For Geography type, distance is in meters.
+        radius_meters = radius_km * 1000.0
+
+        query = (
+            select(User, func.ST_Distance(User.location, center_point).label("distance"))
+            .where(func.ST_DWithin(User.location, center_point, radius_meters))
+            .order_by("distance")
+        )
+
+        result = await self.session.execute(query)
+        return result.all()
 
     async def delete(self, user_id: UUID) -> DeleteAccountResponse:
         """
