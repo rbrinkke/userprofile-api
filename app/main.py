@@ -13,7 +13,7 @@ from slowapi.util import get_remote_address
 
 from app.config import settings
 from app.core.cache import cache
-from app.core.database import db
+from app.core import database as db
 from app.core.exceptions import APIException
 from app.core.logging_config import setup_logging, get_logger
 from app.middleware.correlation import CorrelationMiddleware
