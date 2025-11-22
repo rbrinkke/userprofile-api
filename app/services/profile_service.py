@@ -8,7 +8,7 @@ from uuid import UUID
 from fastapi import Depends
 
 from app.core.cache import cache
-from app.core.database import Database, get_db
+from app.core.database import get_db
 from app.core.exceptions import ResourceNotFoundError, ResourceDuplicateError
 from app.core.logging_config import get_logger
 from app.repositories.profile_repository import ProfileRepository, get_profile_repository

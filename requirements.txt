@@ -1,6 +1,6 @@
 fastapi==0.121.3
 uvicorn[standard]==0.38.0
-pydantic==2.10.1
+pydantic==2.12.4
 pydantic-settings==2.7.0
 asyncpg==0.30.0
 redis[hiredis]==5.2.0
@@ -13,3 +13,5 @@ prometheus-fastapi-instrumentator==7.1.0
 slowapi==0.1.9
 httpx==0.28.1
 orjson
+sqlmodel
+sqlalchemy

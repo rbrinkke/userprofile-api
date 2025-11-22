@@ -4,7 +4,6 @@ from uuid import UUID
 
 from fastapi import Depends
 
-from app.core.database import Database
 from app.core.exceptions import ResourceNotFoundError
 from app.core.logging_config import get_logger
 from app.repositories.search_repository import SearchRepository, get_search_repository
